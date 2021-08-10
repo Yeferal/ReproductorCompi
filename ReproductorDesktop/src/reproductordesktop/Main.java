@@ -6,6 +6,11 @@
 package reproductordesktop;
 
 import gui.VentanaPrincipal;
+import gui.editor.AnalizadorLexicoCode;
+import gui.editor.AnalizadorSintacticoCode;
+import java.io.StringReader;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -17,6 +22,21 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        String texto = "\n\n>>comenñtario de una sola línea\n" +
+"<- comentañrio de varias líneas\n" +
+"Segunda línea\n" +
+"Tercera línea\n" +
+"...\n" +
+"->";
+        
+        AnalizadorLexicoCode analizadorLexicoCode = new AnalizadorLexicoCode(new StringReader(texto));
+        AnalizadorSintacticoCode analizadorSintacticoCode = new AnalizadorSintacticoCode(analizadorLexicoCode);
+        try {
+            analizadorSintacticoCode.parse();
+        } catch (Exception ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
         VentanaPrincipal ventanaPrincipal = new VentanaPrincipal();
         ventanaPrincipal.setVisible(true);
     }

@@ -1,0 +1,51 @@
+//codigo usuario
+package gui.editor;
+import java_cup.runtime.Symbol;
+import java.util.ArrayList;
+
+
+//Codigo para el parser, variables, metodos
+parser code
+{:
+    //codigo
+
+:}
+
+//Coidgo para las acciones gramaticales
+
+action code
+{:
+    
+:}
+
+//Declaraciones 
+terminal COMENTARIO_SIMPLE, COMENTARIO, IDENTIFICADOR, NUMERO; 
+terminal CADENA, CARACTER, PALABRAS_RESERVADAS, OTROS; 
+
+
+
+// declaracion no terminales
+non terminal INICIO;
+
+
+//presedencia de menor a mayor
+//precedence left MAS;
+//precedence left POR;
+//precedence left MAS;
+
+
+
+start with INICIO;
+
+//Reglas Semanticas
+
+
+INICIO ::=   COMENTARIO_SIMPLE INICIO
+            |COMENTARIO INICIO
+            |IDENTIFICADOR INICIO
+            |NUMERO INICIO
+            |CADENA INICIO
+            |CARACTER INICIO
+            |PALABRAS_RESERVADAS INICIO
+            |OTROS INICIO
+            |;
