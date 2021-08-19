@@ -1,0 +1,331 @@
+//codigo usuario
+package gui.editor;
+import java_cup.runtime.Symbol;
+import java.util.ArrayList;
+
+
+//Codigo para el parser, variables, metodos
+parser code
+{:
+    //codigo
+
+:}
+
+//Coidgo para las acciones gramaticales
+
+action code
+{:
+    
+:}
+
+//Declaraciones 
+terminal COMENTARIO_LINEA, COMENTARIO_BLOQUE;
+terminal PISTA, IDENTIFICADOR, EXTIENDE, COMA, PUNTO_COMA;
+terminal ENTERO, DOBLE, BOOLEAN, CARACTER_RSV, CADENA_RSV;
+terminal IGUAL_IGUAL, DIFERENTE, MAYOR_Q, MENOR_Q, MAYOR_IGUAL, MENOR_IGUAL, IS_NULL;
+terminal AND, NAND, OR, NOR, XOR, NOT;
+terminal MAS, MENOS, POR, DIVISION, MODULO, POTENCIA;
+terminal KEEP, VAR, IGUAL;
+terminal NUMERO, DECIMAL, CADENA, TRUE, FALSE, CARACTER;
+terminal MAS_IGUAL, MAS_MAS, MENOS_MENOS;
+terminal ARREGLO, CORCHETE_A, CORCHETE_C, LLAVE_A, LLAVE_C;
+terminal SI, SINO, PA_A, PA_C;
+terminal SWITCH, CASO, SALIR, DEFAULT;
+terminal PARA, MIENTRAS, HACER, CONTINUAR;
+terminal RETORNAR, VOID;
+terminal REPRODUCIR, ESPERAR, ORDENAR, ASCENDENTE, DESCENDENTE, PARES, IMPARES, PRIMOS;
+terminal SUMARIZAR, LONGITUD, MENSAJE, PRINCIPAL;
+terminal DO, RE, MI, FA, SOL, LA, DO_S, RE_S, FA_S, SOL_S, LA_S;
+
+
+
+// declaracion no terminales
+non terminal INICIO, blanco, comentarios, codigo, struct_pista, struct_extiende;
+non terminal extiende_state, struc_code, struct_declaracion_var, keep_state;
+non terminal valor_declaracion_operacion, valor, struc_asig_var, tipo_dato;
+non terminal struct_valor_logico, valor_operacion, struct_declaracion_array;
+non terminal dim_arreglo, valor_arreglo, valores_array;
+non terminal struct_si, struct_sino, struct_switch;
+non terminal state_tab, struct_asig_arreglo;
+non terminal struct_para, struct_mientras;
+non terminal struct_hacer, struct_funcion, struct_procedimiento, struct_reproducir;
+non terminal struct_esperar, struct_ordenar, struct_sumarizar, struct_longitud;
+non terminal struct_mensaje, struct_principal;
+non terminal strunt_llamada_funcion, struct_llamada_arreglo, parametros, state_params;
+non terminal para_asig_var, condicion_para, incremento_para, struct_parametros;
+non terminal notas, tipo_orden;
+//non terminal ;
+/*non terminal ;
+non terminal ;
+non terminal ;
+non terminal ;
+*/
+
+
+//presedencia de menor a mayor
+//Precediencia operadores logicos
+precedence left OR, NOR, XOR;
+precedence left AND, NAND;
+precedence right NOT;
+
+//Presedencia operadores matematicos
+precedence left MAS, MENOS;
+precedence left MODULO, DIVISION, POR;
+precedence left POTENCIA;
+
+
+
+start with INICIO;
+
+//Reglas Semanticas
+
+
+INICIO ::= blanco codigo;
+
+/*------------------------------------------------------------------------------LO QUE VENGA AL INICIO*/
+blanco ::= 	 comentarios blanco
+			|;
+
+/*------------------------------------------------------------------------------COMENTARIOS*/
+
+comentarios ::=  COMENTARIO_LINEA
+				|COMENTARIO_BLOQUE;
+
+/*------------------------------------------------------------------------------CODIGO PISTA*/
+codigo ::= 	 struct_pista codigo
+            |;
+
+/*------------------------------------------------------------------------------ESTRUCTURA DE PISTA*/
+
+struct_pista ::= PISTA IDENTIFICADOR extiende_state  struc_code;
+
+/*------------------------------------------------------------------------------ESTADO EXTIENDE O NO*/
+
+extiende_state ::= 	 struct_extiende
+					|;
+
+/*------------------------------------------------------------------------------ESTRUCTURA EXTIENDE*/
+
+struct_extiende ::=  struct_extiende COMA IDENTIFICADOR
+					|EXTIENDE IDENTIFICADOR;
+
+/*------------------------------------------------------------------------------ESTRUCTURA DE BLOQUE DE CODIGO*/
+
+// DESPUES NO PUEDE VENIR  , TAMBIEN PUEDE VENIR COMENTARIO
+/*struc_code ::=	 struct_declaracion_var struc_code
+				|struc_asig_var   struc_code
+				|struct_declaracion_array   struc_code
+				|struct_asig_arreglo struc_code
+				|struct_si struc_code
+                |struct_sino struc_code
+                |struct_switch struc_code
+                |struct_para struc_code
+                |struct_mientras struc_code
+                |struct_hacer struc_code
+                |struct_funcion struc_code
+                |struct_procedimiento struc_code
+                |struct_reproducir struc_code
+                |struct_esperar struc_code
+                |struct_ordenar struc_code
+                |struct_sumarizar struc_code
+                |struct_longitud struc_code
+                |struct_mensaje struc_code
+                |struct_principal struc_code
+                |struct_pista struc_code
+				|;*/
+
+struc_code ::=	 struct_declaracion_var struc_code
+                |struc_asig_var struc_code
+                |struct_declaracion_array   struc_code
+				|;
+
+/*------------------------------------------------------------------------------ESTRUCTURA DE DECLARACION DE VARIABLES*/
+
+struct_declaracion_var ::=	 struct_declaracion_var COMA IDENTIFICADOR
+							|struct_declaracion_var COMA IDENTIFICADOR IGUAL valor_declaracion_operacion
+							|keep_state VAR tipo_dato IDENTIFICADOR IGUAL valor_declaracion_operacion
+							|keep_state VAR tipo_dato IDENTIFICADOR;
+
+/*------------------------------------------------------------------------------ESTADO KEEP*/
+
+keep_state ::=   KEEP 
+                | ;
+
+/*------------------------------------------------------------------------------valor declaracion de variable*/
+
+valor_declaracion_operacion ::=	 valor_declaracion_operacion MAS valor_declaracion_operacion
+								|valor_declaracion_operacion MENOS valor_declaracion_operacion
+								|valor_declaracion_operacion POR valor_declaracion_operacion
+								|valor_declaracion_operacion DIVISION valor_declaracion_operacion
+								|valor_declaracion_operacion MODULO valor_declaracion_operacion
+								|valor_declaracion_operacion POTENCIA valor_declaracion_operacion
+								|PA_A valor_declaracion_operacion PA_C
+								|valor;
+
+/*------------------------------------------------------------------------------VALORES DE DATOS*/
+
+valor ::=	IDENTIFICADOR
+			|strunt_llamada_funcion
+			|struct_llamada_arreglo
+			|NUMERO
+			|DECIMAL
+			|CADENA
+			|CARACTER
+			|TRUE
+			|FALSE;
+
+strunt_llamada_funcion ::= IDENTIFICADOR PA_A state_params PA_C;
+
+
+parametros ::= parametros COMA valor_operacion
+            |valor_operacion ;
+
+state_params ::= parametros
+                | ;
+
+struct_llamada_arreglo ::= IDENTIFICADOR dim_arreglo;
+
+/*------------------------------------------------------------------------------TIPO DE DATOS*/
+
+tipo_dato ::=	 DOBLE
+				|ENTERO
+				|CARACTER_RSV
+				|CADENA_RSV
+				|BOOLEAN;
+
+
+/*------------------------------------------------------------------------------ESTRUCTURA LOGICA*/
+
+struct_valor_logico ::=	 struct_valor_logico OR struct_valor_logico
+						|struct_valor_logico NOR struct_valor_logico
+						|struct_valor_logico XOR struct_valor_logico
+						|struct_valor_logico AND struct_valor_logico
+						|struct_valor_logico NAND struct_valor_logico
+						|NOT struct_valor_logico
+						|PA_A struct_valor_logico PA_C
+						|valor_operacion;
+
+
+/*------------------------------------------------------------------------------VALOR OPERACIONAL*/
+
+valor_operacion ::=	 valor_operacion MAS valor_operacion
+					|valor_operacion MENOS valor_operacion
+					|valor_operacion DIVISION valor_operacion
+					|valor_operacion MODULO valor_operacion
+					|valor_operacion POTENCIA valor_operacion
+					|PA_A valor_operacion PA_C
+					|valor;
+
+/*------------------------------------------------------------------------------Estructura arreglo*/
+
+struct_declaracion_array ::= struct_declaracion_array COMA IDENTIFICADOR dim_arreglo
+							|struct_declaracion_array COMA IDENTIFICADOR
+							|struct_declaracion_array COMA IDENTIFICADOR dim_arreglo IGUAL valor_arreglo
+							|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo IGUAL valor_arreglo
+							|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR
+							|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo;
+
+/*------------------------------------------------------------------------------TAMANIO ARREGLO*/
+
+dim_arreglo ::=	 dim_arreglo CORCHETE_A valor_operacion CORCHETE_C
+				|CORCHETE_A valor_operacion CORCHETE_C ;
+
+
+/*------------------------------------------------------------------------------VALORES ARREGLO*/
+
+valor_arreglo ::=	 LLAVE_A valor_arreglo LLAVE_C
+					|LLAVE_A valores_array LLAVE_C
+					|LLAVE_A valores_array LLAVE_C COMA valor_arreglo;
+
+valores_array ::=  	 valores_array COMA valor_operacion
+					|valores_array COMA struct_valor_logico
+					|valor_operacion
+					|struct_valor_logico;
+
+/*------------------------------------------------------------------------------ESTRUCTURA ASIGNACION VALORES ARREGLO*/
+
+struct_asig_arreglo ::=  IDENTIFICADOR dim_arreglo IGUAL valor_operacion
+						|IDENTIFICADOR dim_arreglo IGUAL struct_valor_logico;
+
+
+/*------------------------------------------------------------------------------ESTRUTURA SI-SINO SI-SINO*/
+
+struct_si ::=	SI PA_A struct_valor_logico PA_C;
+
+struct_sino ::=	 SINO SI PA_A struct_valor_logico PA_C
+				|SINO ;
+
+/*------------------------------------------------------------------------------ESTRUCTURA SWITCH*/
+
+struct_switch ::= SWITCH PA_A IDENTIFICADOR PA_C
+				|CASO valor_operacion
+				|SALIR
+				|DEFAULT;
+
+/*------------------------------------------------------------------------------ESTRUCTURA PARA*/
+
+struct_para ::=	 PARA PA_A para_asig_var PUNTO_COMA condicion_para PUNTO_COMA incremento_para PA_C;
+
+para_asig_var ::=	 VAR tipo_dato IDENTIFICADOR IGUAL valor_operacion
+					|IDENTIFICADOR IGUAL valor_operacion;
+
+condicion_para ::=	struct_valor_logico;
+
+incremento_para ::=  IDENTIFICADOR IGUAL valor_operacion
+					|IDENTIFICADOR MAS_IGUAL valor_operacion
+					|IDENTIFICADOR MAS_MAS
+					|IDENTIFICADOR MENOS_MENOS;
+
+
+/*------------------------------------------------------------------------------Estrcutura mientras, hacer-mientras, */
+
+struct_mientras ::=	MIENTRAS PA_A struct_valor_logico PA_C;
+
+struct_hacer ::= HACER
+				|CONTINUAR;
+
+/*------------------------------------------------------------------------------STRUCUTRA DE UNA FUNCION*/
+
+struct_funcion ::=	 keep_state tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C
+					|RETORNAR;
+
+struct_procedimiento ::=	keep_state IDENTIFICADOR PA_A struct_parametros PA_C;
+
+
+struct_parametros ::= 	 struct_parametros COMA VAR tipo_dato IDENTIFICADOR
+						|VAR tipo_dato IDENTIFICADOR;
+
+/*------------------------------------------------------------------------------Funciones reservadas*/
+
+struct_reproducir ::= REPRODUCIR PA_A notas COMA valor_operacion COMA valor_operacion COMA valor_operacion PA_C;
+
+struct_esperar ::= ESPERAR PA_A valor_operacion COMA valor_operacion PA_C;
+
+struct_ordenar ::= ORDENAR PA_A IDENTIFICADOR COMA tipo_orden PA_C;
+
+struct_sumarizar ::= SUMARIZAR PA_A  PA_C;
+
+struct_longitud ::= LONGITUD PA_A valor_operacion PA_C;
+
+struct_mensaje ::= MENSAJE PA_A struct_valor_logico PA_C;
+
+/*------------------------------------------------------------------------------NOTAS MUSICALES*/
+
+notas ::= 	 DO | RE | MI | FA | SOL | LA | SI 
+			|DO_S | RE_S | FA_S | SOL_S | LA_S;
+
+/*------------------------------------------------------------------------------OCTAVAS*/
+
+//octavas ::= 
+/*------------------------------------------------------------------------------TIPO DE ORDEN*/
+
+tipo_orden ::= ASCENDENTE | DESCENDENTE | PARES | IMPARES | PRIMOS ;
+
+/*------------------------------------------------------------------------------ORDENACION*/ 
+
+orden_valor ::=  valor_operacion
+				|valor_arreglo;
+
+/*------------------------------------------------------------------------------STRUTURA PRINCIPAL MEOTODO*/
+
+struct_principal ::=	PRINCIPAL PA_A PA_C;
