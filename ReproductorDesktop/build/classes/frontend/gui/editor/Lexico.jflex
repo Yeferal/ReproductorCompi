@@ -7,7 +7,7 @@ import java.util.ArrayList;
 %{
     //coidgo de usuario en sintaxis java
     public void printConsole(String s){
-        System.out.print(s);
+        //System.out.print(s);
     }
     String cadena="";
     public Pintar pintar = new Pintar();
@@ -37,6 +37,15 @@ import java.util.ArrayList;
 // Gris        ->  Comentario
 // Negro       ->  Otro
 
+LineTerminator = \r|\n|\r\n
+InputCaracter = [^\r\n]
+//WhiteSpace = {LineTerminator} | [ \t\f]
+
+/*Comentarios*/
+//Comment = {ComentarioTradicional} | {FinLineaComment} | {DocumentoComentado}
+CommentBloque = ("<-" [^*] ~"->" | "<-" "-"+ ">")
+CommentSimple = (">" ">" {InputCaracter}* {LineTerminator}?)
+//CommentContenido = ( [^*] | \*+ [^/*] )*
 
 
 Signo               = [-_.!@#%&*|/]
@@ -47,15 +56,18 @@ Palabra             = {Letra}+
 Cadena              = ("\"" ([^\"]* | {Letra}) "\"" )
 LqSea               =  ({Signo}|{Letra}|{Numero}|{Cadena})*
 Espacio             = [" "\r\t\b\n]+
-//Salto               = [\n\t\r" "]+
+Blancos               = [" "\r\t\b\f""]
 %%
 
 <YYINITIAL> {
     //("â")*          {/*Ignore*/}
 
     //Comentarios
-    (">>"({LqSea})* "\n")                 {printConsole("COMENTARIO_SIMPLE: "+yytext()+"\n"); pintar.pintaGris((int) yychar,yylength()); return new Symbol(SimbolosCode.COMENTARIO_LINEA , yycolumn, yyline, yytext());}
-    ("<-"({LqSea}|"\n")* "->")            {printConsole("COMENTARIO: "+yytext()+"\n"); pintar.pintaGris((int) yychar,yylength()); return new Symbol(SimbolosCode.COMENTARIO_BLOQUE , yycolumn, yyline, yytext());}
+    //({CommentSimple}})                 {printConsole("COMENTARIO_SIMPLE: "+yytext()+"\n"); pintar.pintaGris((int) yychar,yylength()); return new Symbol(SimbolosCode.COMENTARIO_LINEA , yycolumn, yyline, yytext());}
+    ({CommentBloque})            {printConsole("COMENTARIO: "+yytext()+"\n"); pintar.pintaGris((int) yychar,yylength()); return new Symbol(SimbolosCode.COMENTARIO_BLOQUE , yycolumn, yyline, yytext());}
+
+    (">>" ({LqSea}|{Blancos})* "\n")                 {printConsole("COMENTARIO_SIMPLE: "+yytext()+"\n"); pintar.pintaGris((int) yychar,yylength()); return new Symbol(SimbolosCode.COMENTARIO_LINEA , yycolumn, yyline, yytext());}
+    //("<-"({LqSea}|"\n")* "->")            {printConsole("COMENTARIO: "+yytext()+"\n"); pintar.pintaGris((int) yychar,yylength()); return new Symbol(SimbolosCode.COMENTARIO_BLOQUE , yycolumn, yyline, yytext());}
 
     //signos o simbolos reservados
     "("                                     {printConsole(yytext()+"\n"); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.PA_A , yycolumn, yyline, yytext());}
@@ -79,7 +91,7 @@ Espacio             = [" "\r\t\b\n]+
     //operadores relacionales
     "=="                                    {printConsole(yytext()); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.IGUAL_IGUAL , yycolumn, yyline, yytext());}
     "!="                                    {printConsole(yytext()); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.DIFERENTE , yycolumn, yyline, yytext());}
-    ">"                                     {printConsole(yytext()); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.MAYOR_Q , yycolumn, yyline, yytext());}
+    ">k"                                     {printConsole("Mayor"); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.MAYOR_Q , yycolumn, yyline, yytext());}
     "<"                                     {printConsole(yytext()); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.MENOR_Q , yycolumn, yyline, yytext());}
     ">="                                    {printConsole(yytext()); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.MAYOR_IGUAL , yycolumn, yyline, yytext());}
     "<="                                    {printConsole(yytext()); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.MENOR_IGUAL , yycolumn, yyline, yytext());}
@@ -124,7 +136,10 @@ Espacio             = [" "\r\t\b\n]+
     (("C"|"c") "aracter")                   {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.CARACTER_RSV , yycolumn, yyline, yytext());}
     (("A"|"a") "rreglo")                    {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.ARREGLO , yycolumn, yyline, yytext());}
     (("S"|"s")"i")                          {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.SI , yycolumn, yyline, yytext());}
+    
     (("S"|"s")"ino")                        {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.SINO , yycolumn, yyline, yytext());}
+    (("S"|"s")"ino si")                        {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.SINO_SI , yycolumn, yyline, yytext());}
+    
     (("S"|"s")"witch")                      {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.SWITCH , yycolumn, yyline, yytext());}
     (("C"|"c")"aso")                        {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.CASO , yycolumn, yyline, yytext());}
     (("S"|"s")"alir")                       {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.SALIR , yycolumn, yyline, yytext());}
@@ -170,7 +185,7 @@ Espacio             = [" "\r\t\b\n]+
                                     //ErrorG e = new ErrorG(yyline+1, yycolumn+1,yytext(),"Lexico","Error Lexico token: " + yytext()+"   Linea: " + (yyline+1) + " ,    Columna: " + (yycolumn+1));
                                     //listaErrores.add(e);
                                     //return new Symbol(Simbolos.CUALQUIER_SIM , yycolumn, yyline, yytext());
-                                            printConsole("ERROR"+yytext()); pintar.pintaNegro((int) yychar,yylength()); /*return new Symbol(SimbolosCode.OTROS , yycolumn, yyline, yytext());*/
+                                            //printConsole("ERR: "+yytext()+"\n"); pintar.pintaNegro((int) yychar,yylength()); /*return new Symbol(SimbolosCode.OTROS , yycolumn, yyline, yytext());*/
                                     }
     
 }

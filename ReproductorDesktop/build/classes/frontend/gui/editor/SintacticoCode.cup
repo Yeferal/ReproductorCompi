@@ -2,12 +2,21 @@
 package gui.editor;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
+import java.util.Stack;
 
 
 //Codigo para el parser, variables, metodos
 parser code
 {:
     //codigo
+/*
+	public void syntax_error(Symbol s) {
+		//System.out.println("fallo");
+	}
+
+	public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{
+		//System.out.println("fallo en algo");
+	}*/
 
 :}
 
@@ -35,7 +44,7 @@ terminal PARA, MIENTRAS, HACER, CONTINUAR;
 terminal RETORNAR, VOID;
 terminal REPRODUCIR, ESPERAR, ORDENAR, ASCENDENTE, DESCENDENTE, PARES, IMPARES, PRIMOS;
 terminal SUMARIZAR, LONGITUD, MENSAJE, PRINCIPAL;
-terminal DO, RE, MI, FA, SOL, LA, DO_S, RE_S, FA_S, SOL_S, LA_S;
+terminal DO, RE, MI, FA, SOL, LA, DO_S, RE_S, FA_S, SOL_S, LA_S, SINO_SI;
 
 
 
@@ -113,7 +122,7 @@ struct_extiende ::=  struct_extiende COMA IDENTIFICADOR
 
 // DESPUES NO PUEDE VENIR  , TAMBIEN PUEDE VENIR COMENTARIO
 /*struc_code ::=	 struct_declaracion_var struc_code
-				|struc_asig_var   struc_code
+				|struc_asig_var struc_code
 				|struct_declaracion_array   struc_code
 				|struct_asig_arreglo struc_code
 				|struct_si struc_code
@@ -135,8 +144,26 @@ struct_extiende ::=  struct_extiende COMA IDENTIFICADOR
 				|;*/
 
 struc_code ::=	 struct_declaracion_var struc_code
-                |struc_asig_var struc_code
-                |struct_declaracion_array struc_code
+				|struc_asig_var struc_code
+				|struct_declaracion_array   struc_code
+				|struct_asig_arreglo struc_code
+				|struct_si struc_code
+                |struct_sino struc_code
+                |struct_switch struc_code
+                |struct_para struc_code
+                |struct_mientras struc_code
+                |struct_hacer struc_code
+                |struct_funcion struc_code
+                |struct_procedimiento struc_code
+                |struct_reproducir struc_code
+                |struct_esperar struc_code
+                |struct_ordenar struc_code
+                |struct_sumarizar struc_code
+                |struct_longitud struc_code
+                |struct_mensaje struc_code
+                |struct_principal struc_code
+				|error struc_code
+				|comentarios struc_code
 				|;
 
 /*------------------------------------------------------------------------------ESTRUCTURA DE DECLARACION DE VARIABLES*/
@@ -215,12 +242,15 @@ valor_operacion ::=	 valor_operacion MAS valor_operacion
 					|PA_A valor_operacion PA_C
 					|valor;
 
+
+struc_asig_var ::= IDENTIFICADOR IGUAL struct_valor_logico;
+
 /*------------------------------------------------------------------------------Estructura arreglo*/
 
 struct_declaracion_array ::= struct_declaracion_array COMA IDENTIFICADOR dim_arreglo
 							|struct_declaracion_array COMA IDENTIFICADOR
-							|struct_declaracion_array COMA IDENTIFICADOR dim_arreglo IGUAL valor_arreglo
-							|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo IGUAL valor_arreglo
+							|struct_declaracion_array COMA IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
+							|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
 							|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR
 							|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo;
 
@@ -241,15 +271,14 @@ valores_array ::=  	 valores_array COMA struct_valor_logico
 
 /*------------------------------------------------------------------------------ESTRUCTURA ASIGNACION VALORES ARREGLO*/
 
-struct_asig_arreglo ::=  IDENTIFICADOR dim_arreglo IGUAL valor_operacion
-						|IDENTIFICADOR dim_arreglo IGUAL struct_valor_logico;
+struct_asig_arreglo ::=  IDENTIFICADOR dim_arreglo IGUAL struct_valor_logico;
 
 
 /*------------------------------------------------------------------------------ESTRUTURA SI-SINO SI-SINO*/
 
 struct_si ::=	SI PA_A struct_valor_logico PA_C;
 
-struct_sino ::=	 SINO SI PA_A struct_valor_logico PA_C
+struct_sino ::=	 SINO_SI PA_A struct_valor_logico PA_C
 				|SINO ;
 
 /*------------------------------------------------------------------------------ESTRUCTURA SWITCH*/
@@ -283,10 +312,12 @@ struct_hacer ::= HACER
 
 /*------------------------------------------------------------------------------STRUCUTRA DE UNA FUNCION*/
 
-struct_funcion ::=	 keep_state tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C
+struct_funcion ::=	 tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C
+					|KEEP tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C
 					|RETORNAR;
 
-struct_procedimiento ::=	keep_state IDENTIFICADOR PA_A struct_parametros PA_C;
+struct_procedimiento ::= IDENTIFICADOR PA_A struct_parametros PA_C
+						|KEEP IDENTIFICADOR PA_A struct_parametros PA_C;
 
 
 struct_parametros ::= 	 struct_parametros COMA VAR tipo_dato IDENTIFICADOR

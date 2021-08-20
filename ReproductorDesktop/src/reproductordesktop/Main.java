@@ -22,7 +22,7 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        String texto = "\n\n>>comenñtario de una sola línea\n" +
+        /*String texto = "\n\n>>comenñtario de una sola línea\n" +
 "<- comentañrio de varias líneas\n" +
 "Segunda línea\n" +
 "Tercera línea\n" +
@@ -35,7 +35,7 @@ public class Main {
             analizadorSintacticoCode.parse();
         } catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        }*/
         
         VentanaPrincipal ventanaPrincipal = new VentanaPrincipal();
         ventanaPrincipal.setVisible(true);

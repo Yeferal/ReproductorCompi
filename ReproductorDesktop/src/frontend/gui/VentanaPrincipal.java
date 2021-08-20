@@ -44,8 +44,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             }
         });
         
-        lines.pane.setText(archivo.leerArchivo("./entrada.txt"));
-        pintarTexto();
+        //lines.pane.setText(archivo.leerArchivo("./entrada_pista.txt"));
+        //pintarTexto();
         
         
     }
@@ -64,7 +64,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         try {
             analizadorSintacticoCode.parse();
         } catch (Exception ex) {
-            Logger.getLogger(VentanaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+            //Logger.getLogger(VentanaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         
@@ -93,7 +93,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 		columna=pos-ultimalinea;                
                 noFila.setText(fila +"");
                 noCol.setText(columna+"");
-                System.out.println("Posicion: "+posicionCursor);
+                //System.out.println("Posicion: "+posicionCursor);
             }
         });
         
@@ -101,7 +101,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     
     private void paneCodeKeyReleased(java.awt.event.KeyEvent evt){
         if(evt.getKeyCode()==KeyEvent.VK_ENTER){
-            System.out.println("Hola");
+            //System.out.println("Hola");
             int fila = 0;
                 //JTextArea jta = (JTextArea) textComp;
                 //return jta.getLineStartOffset(lineNumber-1);
@@ -112,7 +112,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             lines.pane.setCaretPosition(fila-1);
         }
         else if(evt.getKeyCode()==KeyEvent.VK_SPACE){
-            System.out.println("Hola");
+            //System.out.println("Hola");
             int fila = 0;
                 //JTextArea jta = (JTextArea) textComp;
                 //return jta.getLineStartOffset(lineNumber-1);
@@ -145,6 +145,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         panelCodigo = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
         menuArchivo = new javax.swing.JMenu();
+        jMenuItem1 = new javax.swing.JMenuItem();
         menuReporte = new javax.swing.JMenu();
         menuAyuda = new javax.swing.JMenu();
 
@@ -246,6 +247,15 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         getContentPane().add(panelCentral, java.awt.BorderLayout.CENTER);
 
         menuArchivo.setText("Archivo");
+
+        jMenuItem1.setText("Abrir Archivo");
+        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem1ActionPerformed(evt);
+            }
+        });
+        menuArchivo.add(jMenuItem1);
+
         jMenuBar1.add(menuArchivo);
 
         menuReporte.setText("Reportes");
@@ -261,16 +271,23 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
     private void jTextPane1KeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextPane1KeyReleased
         if(evt.getKeyCode()==KeyEvent.VK_ENTER){
-            System.out.println("Hola");
+            //System.out.println("Hola");
             
         }
     }//GEN-LAST:event_jTextPane1KeyReleased
+
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+        pintarTexto();
+        
+        
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
 
     
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel2;
     private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTextPane jTextPane1;
