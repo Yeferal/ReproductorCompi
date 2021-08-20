@@ -51,7 +51,7 @@ Espacio             = [" "\r\t\b\n]+
 %%
 
 <YYINITIAL> {
-    ("â")*          {/*Ignore*/}
+    //("â")*          {/*Ignore*/}
 
     //Comentarios
     (">>"({LqSea})* "\n")                 {printConsole("COMENTARIO_SIMPLE: "+yytext()+"\n"); pintar.pintaGris((int) yychar,yylength()); return new Symbol(SimbolosCode.COMENTARIO_LINEA , yycolumn, yyline, yytext());}

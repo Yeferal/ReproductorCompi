@@ -136,7 +136,7 @@ struct_extiende ::=  struct_extiende COMA IDENTIFICADOR
 
 struc_code ::=	 struct_declaracion_var struc_code
                 |struc_asig_var struc_code
-                |struct_declaracion_array   struc_code
+                |struct_declaracion_array struc_code
 				|;
 
 /*------------------------------------------------------------------------------ESTRUCTURA DE DECLARACION DE VARIABLES*/
@@ -202,7 +202,6 @@ struct_valor_logico ::=	 struct_valor_logico OR struct_valor_logico
 						|struct_valor_logico AND struct_valor_logico
 						|struct_valor_logico NAND struct_valor_logico
 						|NOT struct_valor_logico
-						|PA_A struct_valor_logico PA_C
 						|valor_operacion;
 
 
@@ -235,11 +234,9 @@ dim_arreglo ::=	 dim_arreglo CORCHETE_A valor_operacion CORCHETE_C
 
 valor_arreglo ::=	 LLAVE_A valor_arreglo LLAVE_C
 					|LLAVE_A valores_array LLAVE_C
-					|LLAVE_A valores_array LLAVE_C COMA valor_arreglo;
+					|valor_arreglo COMA LLAVE_A valores_array LLAVE_C ;
 
-valores_array ::=  	 valores_array COMA valor_operacion
-					|valores_array COMA struct_valor_logico
-					|valor_operacion
+valores_array ::=  	 valores_array COMA struct_valor_logico
 					|struct_valor_logico;
 
 /*------------------------------------------------------------------------------ESTRUCTURA ASIGNACION VALORES ARREGLO*/
