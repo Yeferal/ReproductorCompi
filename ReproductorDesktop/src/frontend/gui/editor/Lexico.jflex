@@ -1,4 +1,4 @@
-package gui.editor;
+package frontend.gui.editor;
 
 import java_cup.runtime.*;
 import java.util.ArrayList;
@@ -91,7 +91,7 @@ Blancos               = [" "\r\t\b\f""]
     //operadores relacionales
     "=="                                    {printConsole(yytext()); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.IGUAL_IGUAL , yycolumn, yyline, yytext());}
     "!="                                    {printConsole(yytext()); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.DIFERENTE , yycolumn, yyline, yytext());}
-    ">k"                                     {printConsole("Mayor"); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.MAYOR_Q , yycolumn, yyline, yytext());}
+    ">"                                     {printConsole("Mayor"); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.MAYOR_Q , yycolumn, yyline, yytext());}
     "<"                                     {printConsole(yytext()); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.MENOR_Q , yycolumn, yyline, yytext());}
     ">="                                    {printConsole(yytext()); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.MAYOR_IGUAL , yycolumn, yyline, yytext());}
     "<="                                    {printConsole(yytext()); pintar.pintaNegro((int) yychar,yylength()); return new Symbol(SimbolosCode.MENOR_IGUAL , yycolumn, yyline, yytext());}
@@ -165,6 +165,8 @@ Blancos               = [" "\r\t\b\f""]
  
     (("F"|"f")"alse")                       {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.FALSE , yycolumn, yyline, yytext());}
     (("T"|"t")"rue")                        {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.TRUE , yycolumn, yyline, yytext());}
+    (("F"|"f")"also")                       {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.FALSE , yycolumn, yyline, yytext());}
+    (("V"|"v")"erdadero")                        {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.TRUE , yycolumn, yyline, yytext());}
 
  /*   ("lista"|"nombre")                      {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.PALABRAS_RESERVADAS , yycolumn, yyline, yytext());}
     ("random"|"circular")                   {printConsole(yytext()); pintar.pintaAzul((int) yychar,yylength()); return new Symbol(SimbolosCode.PALABRAS_RESERVADAS , yycolumn, yyline, yytext());}

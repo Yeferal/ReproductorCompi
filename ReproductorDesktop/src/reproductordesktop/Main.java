@@ -6,8 +6,8 @@
 package reproductordesktop;
 
 import gui.VentanaPrincipal;
-import gui.editor.AnalizadorLexicoCode;
-import gui.editor.AnalizadorSintacticoCode;
+import frontend.gui.editor.AnalizadorLexicoCode;
+import frontend.gui.editor.AnalizadorSintacticoCode;
 import java.io.StringReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;

@@ -1,5 +1,5 @@
 //codigo usuario
-package gui.editor;
+package frontend.gui.editor;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
 import java.util.Stack;
@@ -9,14 +9,14 @@ import java.util.Stack;
 parser code
 {:
     //codigo
-/*
+
 	public void syntax_error(Symbol s) {
-		//System.out.println("fallo");
+		System.out.println("ERROR: Columna: "+(s.left+1)+", Fila: "+(s.right+1)+", Token: "+s.value);
 	}
 
 	public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{
-		//System.out.println("fallo en algo");
-	}*/
+		System.out.println("ERROR: Columna: "+(s.left+1)+", Fila: "+(s.right+1)+", Token: "+s.value);
+	}
 
 :}
 
@@ -52,7 +52,7 @@ terminal DO, RE, MI, FA, SOL, LA, DO_S, RE_S, FA_S, SOL_S, LA_S, SINO_SI;
 non terminal INICIO, blanco, comentarios, codigo, struct_pista, struct_extiende;
 non terminal extiende_state, struc_code, struct_declaracion_var, keep_state;
 non terminal valor_declaracion_operacion, valor, struc_asig_var, tipo_dato;
-non terminal struct_valor_logico, valor_operacion, struct_declaracion_array;
+non terminal struct_operador_logico, valor_operacion, struct_declaracion_array;
 non terminal dim_arreglo, valor_arreglo, valores_array;
 non terminal struct_si, struct_sino, struct_switch;
 non terminal state_tab, struct_asig_arreglo;
@@ -62,8 +62,8 @@ non terminal struct_esperar, struct_ordenar, struct_sumarizar, struct_longitud;
 non terminal struct_mensaje, struct_principal;
 non terminal strunt_llamada_funcion, struct_llamada_arreglo, parametros, state_params;
 non terminal para_asig_var, condicion_para, incremento_para, struct_parametros;
-non terminal notas, tipo_orden;
-//non terminal ;
+non terminal notas, tipo_orden, struct_operador_relacional;
+non terminal tipo_valor_op_logico, mensajes;
 /*non terminal ;
 non terminal ;
 non terminal ;
@@ -191,7 +191,7 @@ valor_declaracion_operacion ::=	 valor_declaracion_operacion MAS valor_declaraci
 
 /*------------------------------------------------------------------------------VALORES DE DATOS*/
 
-valor ::=	IDENTIFICADOR
+valor ::=	 IDENTIFICADOR
 			|strunt_llamada_funcion
 			|struct_llamada_arreglo
 			|NUMERO
@@ -223,27 +223,50 @@ tipo_dato ::=	 DOBLE
 
 /*------------------------------------------------------------------------------ESTRUCTURA LOGICA*/
 
-struct_valor_logico ::=	 struct_valor_logico OR struct_valor_logico
-						|struct_valor_logico NOR struct_valor_logico
-						|struct_valor_logico XOR struct_valor_logico
-						|struct_valor_logico AND struct_valor_logico
-						|struct_valor_logico NAND struct_valor_logico
-						|NOT struct_valor_logico
-						|valor_operacion;
+struct_operador_logico ::=	 struct_operador_logico OR struct_operador_logico
+						|struct_operador_logico NOR struct_operador_logico
+						|struct_operador_logico XOR struct_operador_logico
+						|struct_operador_logico AND struct_operador_logico
+						|struct_operador_logico NAND struct_operador_logico
+						|NOT struct_operador_logico
+						|PA_A struct_operador_logico PA_C
+						// |IDENTIFICADOR
+						// |strunt_llamada_funcion
+						// |struct_llamada_arreglo
+						// |NUMERO
+						// |TRUE
+						// |FALSE
+						|struct_operador_relacional;
+
+struct_operador_relacional ::=	 valor_operacion IGUAL_IGUAL valor_operacion
+								|valor_operacion DIFERENTE valor_operacion
+								|valor_operacion MAYOR_Q valor_operacion
+								|valor_operacion MENOR_Q valor_operacion
+								|valor_operacion MAYOR_IGUAL valor_operacion
+								|valor_operacion MENOR_IGUAL valor_operacion
+								|valor_operacion IS_NULL valor_operacion;
+								
 
 
 /*------------------------------------------------------------------------------VALOR OPERACIONAL*/
 
 valor_operacion ::=	 valor_operacion MAS valor_operacion
 					|valor_operacion MENOS valor_operacion
+					|valor_operacion POR valor_operacion
 					|valor_operacion DIVISION valor_operacion
 					|valor_operacion MODULO valor_operacion
 					|valor_operacion POTENCIA valor_operacion
 					|PA_A valor_operacion PA_C
+					|NOT PA_A IDENTIFICADOR PA_C
 					|valor;
 
 
-struc_asig_var ::= IDENTIFICADOR IGUAL struct_valor_logico;
+struc_asig_var ::= 	 IDENTIFICADOR IGUAL struct_operador_logico
+					|IDENTIFICADOR MAS_IGUAL struct_operador_logico
+					|IDENTIFICADOR IGUAL valor_operacion
+					|IDENTIFICADOR MAS_IGUAL valor_operacion
+					|IDENTIFICADOR MAS_MAS
+					|IDENTIFICADOR MENOS_MENOS;
 
 /*------------------------------------------------------------------------------Estructura arreglo*/
 
@@ -266,19 +289,22 @@ valor_arreglo ::=	 LLAVE_A valor_arreglo LLAVE_C
 					|LLAVE_A valores_array LLAVE_C
 					|valor_arreglo COMA LLAVE_A valores_array LLAVE_C ;
 
-valores_array ::=  	 valores_array COMA struct_valor_logico
-					|struct_valor_logico;
+valores_array ::=  	 valores_array COMA tipo_valor_op_logico
+					|tipo_valor_op_logico;
+
+tipo_valor_op_logico ::= struct_operador_logico
+						|valor_operacion;
 
 /*------------------------------------------------------------------------------ESTRUCTURA ASIGNACION VALORES ARREGLO*/
 
-struct_asig_arreglo ::=  IDENTIFICADOR dim_arreglo IGUAL struct_valor_logico;
+struct_asig_arreglo ::=  IDENTIFICADOR dim_arreglo IGUAL tipo_valor_op_logico;
 
 
 /*------------------------------------------------------------------------------ESTRUTURA SI-SINO SI-SINO*/
 
-struct_si ::=	SI PA_A struct_valor_logico PA_C;
+struct_si ::=	SI PA_A struct_operador_logico PA_C;
 
-struct_sino ::=	 SINO_SI PA_A struct_valor_logico PA_C
+struct_sino ::=	 SINO_SI PA_A struct_operador_logico PA_C
 				|SINO ;
 
 /*------------------------------------------------------------------------------ESTRUCTURA SWITCH*/
@@ -295,7 +321,7 @@ struct_para ::=	 PARA PA_A para_asig_var PUNTO_COMA condicion_para PUNTO_COMA in
 para_asig_var ::=	 VAR tipo_dato IDENTIFICADOR IGUAL valor_operacion
 					|IDENTIFICADOR IGUAL valor_operacion;
 
-condicion_para ::=	struct_valor_logico;
+condicion_para ::=	struct_operador_logico;
 
 incremento_para ::=  IDENTIFICADOR IGUAL valor_operacion
 					|IDENTIFICADOR MAS_IGUAL valor_operacion
@@ -305,7 +331,7 @@ incremento_para ::=  IDENTIFICADOR IGUAL valor_operacion
 
 /*------------------------------------------------------------------------------Estrcutura mientras, hacer-mientras, */
 
-struct_mientras ::=	MIENTRAS PA_A struct_valor_logico PA_C;
+struct_mientras ::=	MIENTRAS PA_A struct_operador_logico PA_C;
 
 struct_hacer ::= HACER
 				|CONTINUAR;
@@ -320,8 +346,9 @@ struct_procedimiento ::= IDENTIFICADOR PA_A struct_parametros PA_C
 						|KEEP IDENTIFICADOR PA_A struct_parametros PA_C;
 
 
-struct_parametros ::= 	 struct_parametros COMA VAR tipo_dato IDENTIFICADOR
-						|VAR tipo_dato IDENTIFICADOR;
+struct_parametros ::= 	 struct_parametros COMA tipo_dato IDENTIFICADOR
+						|tipo_dato IDENTIFICADOR;
+						// |VAR tipo_dato IDENTIFICADOR;
 
 /*------------------------------------------------------------------------------Funciones reservadas*/
 
@@ -335,7 +362,13 @@ struct_sumarizar ::= SUMARIZAR PA_A  PA_C;
 
 struct_longitud ::= LONGITUD PA_A valor_operacion PA_C;
 
-struct_mensaje ::= MENSAJE PA_A struct_valor_logico PA_C;
+struct_mensaje ::= 	 MENSAJE PA_A mensajes PA_C
+					|MENSAJE PA_A PA_C;
+
+mensajes ::= mensajes MAS valor_operacion
+			|mensajes MAS struct_operador_logico 
+			|valor_operacion
+			|struct_operador_logico;
 
 /*------------------------------------------------------------------------------NOTAS MUSICALES*/
 

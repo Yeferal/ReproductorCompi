@@ -6,8 +6,8 @@
 package gui;
 
 import archivos.Archivo;
-import gui.editor.AnalizadorLexicoCode;
-import gui.editor.AnalizadorSintacticoCode;
+import frontend.gui.editor.AnalizadorLexicoCode;
+import frontend.gui.editor.AnalizadorSintacticoCode;
 import gui.editor.LineasText;
 import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
