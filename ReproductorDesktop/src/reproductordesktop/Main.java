@@ -5,7 +5,7 @@
  */
 package reproductordesktop;
 
-import gui.VentanaPrincipal;
+import frontend.gui.VentanaPrincipal;
 import frontend.gui.editor.AnalizadorLexicoCode;
 import frontend.gui.editor.AnalizadorSintacticoCode;
 import java.io.StringReader;

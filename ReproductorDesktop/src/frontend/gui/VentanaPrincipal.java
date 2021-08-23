@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package gui;
+package frontend.gui;
 
-import archivos.Archivo;
+import backend.archivos.Archivo;
 import frontend.gui.editor.AnalizadorLexicoCode;
 import frontend.gui.editor.AnalizadorSintacticoCode;
-import gui.editor.LineasText;
+import frontend.gui.editor.LineasText;
 import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.io.StringReader;

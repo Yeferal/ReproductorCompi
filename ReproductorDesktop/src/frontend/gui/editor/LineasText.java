@@ -1,5 +1,5 @@
 
-package gui.editor;
+package frontend.gui.editor;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
