@@ -4,8 +4,6 @@
 	Linea2 áéíóú
 	Linea3 ÁÉÍÓÚ
 ->
-	
-
 
 Pista pista1
 	>>cuerpo de la pista
@@ -14,6 +12,7 @@ Pista pista1
 	keep var cadena cadena1= "hola"
 	var caracter caracter1, caracter2='a'
 	var boolean flag1=true, flag2=0, flag3= cadena1=="hola"
+	var boolean flag22= !(flag1)
 
 	>> funcion principal
 	Principal()

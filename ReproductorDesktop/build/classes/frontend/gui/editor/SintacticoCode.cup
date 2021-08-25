@@ -11,11 +11,11 @@ parser code
     //codigo
 
 	public void syntax_error(Symbol s) {
-		System.out.println("ERROR: Columna: "+(s.left+1)+", Fila: "+(s.right+1)+", Token: "+s.value);
+		//System.out.println("ERROR: Columna: "+(s.left+1)+", Fila: "+(s.right+1)+", Token: "+s.value);
 	}
 
 	public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{
-		System.out.println("ERROR: Columna: "+(s.left+1)+", Fila: "+(s.right+1)+", Token: "+s.value);
+		//System.out.println("ERROR: Columna: "+(s.left+1)+", Fila: "+(s.right+1)+", Token: "+s.value);
 	}
 
 :}
@@ -49,21 +49,21 @@ terminal DO, RE, MI, FA, SOL, LA, DO_S, RE_S, FA_S, SOL_S, LA_S, SINO_SI;
 
 
 // declaracion no terminales
-non terminal INICIO, blanco, comentarios, codigo, struct_pista, struct_extiende;
-non terminal extiende_state, struc_code, struct_declaracion_var, keep_state;
-non terminal valor_declaracion_operacion, valor, struc_asig_var, tipo_dato;
-non terminal struct_operador_logico, valor_operacion, struct_declaracion_array;
-non terminal dim_arreglo, valor_arreglo, valores_array;
-non terminal struct_si, struct_sino, struct_switch;
-non terminal state_tab, struct_asig_arreglo;
-non terminal struct_para, struct_mientras;
-non terminal struct_hacer, struct_funcion, struct_procedimiento, struct_reproducir;
-non terminal struct_esperar, struct_ordenar, struct_sumarizar, struct_longitud;
-non terminal struct_mensaje, struct_principal;
-non terminal strunt_llamada_funcion, struct_llamada_arreglo, parametros, state_params;
-non terminal para_asig_var, condicion_para, incremento_para, struct_parametros;
-non terminal notas, tipo_orden, struct_operador_relacional;
-non terminal tipo_valor_op_logico, mensajes;
+non terminal String INICIO, blanco, comentarios, codigo, struct_pista, struct_extiende;
+non terminal String extiende_state, struc_code, struct_declaracion_var, keep_state;
+non terminal String valor_declaracion_operacion, valor, struc_asig_var, tipo_dato;
+non terminal String struct_operador_logico, valor_operacion, struct_declaracion_array;
+non terminal String dim_arreglo, valor_arreglo, valores_array;
+non terminal String struct_si, struct_sino, struct_switch;
+non terminal String state_tab, struct_asig_arreglo;
+non terminal String struct_para, struct_mientras;
+non terminal String struct_hacer, struct_funcion, struct_procedimiento, struct_reproducir;
+non terminal String struct_esperar, struct_ordenar, struct_sumarizar, struct_longitud;
+non terminal String struct_mensaje, struct_principal;
+non terminal String strunt_llamada_funcion, struct_llamada_arreglo, parametros, state_params;
+non terminal String para_asig_var, condicion_para, incremento_para, struct_parametros;
+non terminal String notas, tipo_orden, struct_operador_relacional;
+non terminal String tipo_valor_op_logico, mensajes;
 /*non terminal ;
 non terminal ;
 non terminal ;
@@ -257,7 +257,7 @@ valor_operacion ::=	 valor_operacion MAS valor_operacion
 					|valor_operacion MODULO valor_operacion
 					|valor_operacion POTENCIA valor_operacion
 					|PA_A valor_operacion PA_C
-					|NOT PA_A IDENTIFICADOR PA_C
+					//|NOT PA_A IDENTIFICADOR PA_C
 					|valor;
 
 

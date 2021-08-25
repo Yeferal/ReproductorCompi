@@ -30,7 +30,7 @@ public class LineasText extends JPanel{
 	LineasText.this.repaint ();
       }
     };
-    pane.setFont(new java.awt.Font("Monospaced", 0, 14));
+    pane.setFont(new java.awt.Font("Monospaced", 0, 13));
     scrollPane = new JScrollPane (pane);
   }
  

@@ -22,20 +22,13 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        /*String texto = "\n\n>>comenñtario de una sola línea\n" +
-"<- comentañrio de varias líneas\n" +
-"Segunda línea\n" +
-"Tercera línea\n" +
-"...\n" +
-"->";
         
-        AnalizadorLexicoCode analizadorLexicoCode = new AnalizadorLexicoCode(new StringReader(texto));
-        AnalizadorSintacticoCode analizadorSintacticoCode = new AnalizadorSintacticoCode(analizadorLexicoCode);
-        try {
-            analizadorSintacticoCode.parse();
-        } catch (Exception ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        }*/
+        String myStr = "\t\tHello planet earth, you are a great planet.";
+        System.out.println(myStr.lastIndexOf("\t"));
+        String myStr1 = "\t\t";
+        System.out.println(myStr1.length());
+        
+        
         
         VentanaPrincipal ventanaPrincipal = new VentanaPrincipal();
         ventanaPrincipal.setVisible(true);

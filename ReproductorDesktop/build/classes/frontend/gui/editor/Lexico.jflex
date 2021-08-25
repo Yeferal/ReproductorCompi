@@ -1,8 +1,8 @@
-package frontend.gui.editor;
+    package frontend.gui.editor;
 
 import java_cup.runtime.*;
 import java.util.ArrayList;
-
+import java.util.Stack;
 %%
 %{
     //coidgo de usuario en sintaxis java
@@ -11,6 +11,8 @@ import java.util.ArrayList;
     }
     String cadena="";
     public Pintar pintar = new Pintar();
+
+    
 
 %}
 
