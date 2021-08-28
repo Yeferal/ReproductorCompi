@@ -6,12 +6,9 @@
 package frontend.gui;
 
 import backend.archivos.Archivo;
-<<<<<<< HEAD
 import backend.analizador.AnalizadorLexico;
 import backend.analizador.AnalizadorSintactico;
 import backend.analizador.ErrorLexico;
-=======
->>>>>>> 6b9ab068299e58c313363f528f005409a1e41633
 import frontend.gui.editor.AnalizadorLexicoCode;
 import frontend.gui.editor.AnalizadorSintacticoCode;
 import frontend.gui.editor.LineasText;

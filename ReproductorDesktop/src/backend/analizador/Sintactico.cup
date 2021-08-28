@@ -107,8 +107,8 @@ non terminal String notas, tipo_orden, struct_operador_relacional;
 non terminal String tipo_valor_op_logico, mensajes;
 non terminal String st_ind, st_ded, st_final, code_funcion, code_metodo, caso_salir, state_continuar, struct_caso ;
 non terminal params_lleno, param_vacio, valores_array_mas_dim, especiales_q_retornan;
+non terminal state_op_logicos, state_op_racional;
 /*non terminal ;
-non terminal ;
 */
 
 
@@ -161,7 +161,11 @@ codigo ::= 	 struct_pista codigo
 
 /*------------------------------------------------------------------------------ESTRUCTURA DE PISTA*/
 
-struct_pista ::= PISTA IDENTIFICADOR extiende_state st_ind struc_code st_final;
+struct_pista ::= 
+	 PISTA IDENTIFICADOR extiende_state st_ind struc_code st_final
+	|PISTA error:e extiende_state st_ind struc_code st_final {:
+				parser.agregarError("Sintactico",(String)e,"Error en nombrar Pista", eright+1, eleft+1);
+    :};
 
 /*------------------------------------------------------------------------------ESTADO EXTIENDE O NO*/
 
@@ -171,29 +175,16 @@ extiende_state ::= 	 struct_extiende
 /*------------------------------------------------------------------------------ESTRUCTURA EXTIENDE*/
 
 struct_extiende ::=  struct_extiende COMA IDENTIFICADOR
-					|EXTIENDE IDENTIFICADOR;
+					|EXTIENDE IDENTIFICADOR
+					|error:e {:
+				parser.agregarError("Sintactico",(String)e,"Error en las Extensiones", eright+1, eleft+1);
+    :};
 
 struc_code ::=	 struct_declaracion_var struc_code
-				//|struc_asig_var struc_code
 				|struct_declaracion_array  struc_code
-				//|struct_asig_arreglo struc_code
-				// |struct_si struc_code
-                // |struct_sino struc_code
-                // |struct_switch struc_code
-                // |struct_para struc_code
-                // |struct_mientras struc_code
-                // |struct_hacer struc_code
                 |struct_funcion struc_code
                 |struct_procedimiento struc_code
-                // |struct_reproducir struc_code
-                // |struct_esperar struc_code
-                // |struct_ordenar struc_code
-                // |struct_sumarizar struc_code
-                // |struct_longitud struc_code
-                // |struct_mensaje struc_code
                 |struct_principal struc_code
-				// |error struc_code
-				//|comentarios struc_code
 				|;
 
 /*------------------------------------------------------------------------------ESTRUCTURA DE DECLARACION DE VARIABLES*/
@@ -222,15 +213,24 @@ keep_state ::=   KEEP
 
 /*------------------------------------------------------------------------------valor declaracion de variable*/
 
-valor_declaracion_operacion ::=	 
-	 valor_declaracion_operacion MAS valor_declaracion_operacion
-	|valor_declaracion_operacion MENOS valor_declaracion_operacion
-	|valor_declaracion_operacion POR valor_declaracion_operacion
-	|valor_declaracion_operacion DIVISION valor_declaracion_operacion
-	|valor_declaracion_operacion MODULO valor_declaracion_operacion
-	|valor_declaracion_operacion POTENCIA valor_declaracion_operacion
-	|PA_A valor_declaracion_operacion PA_C
-	|valor;
+// valor_declaracion_operacion ::=	 
+// 	 valor_declaracion_operacion MAS valor_declaracion_operacion
+// 	|valor_declaracion_operacion MENOS valor_declaracion_operacion
+// 	|valor_declaracion_operacion POR valor_declaracion_operacion
+// 	|valor_declaracion_operacion DIVISION valor_declaracion_operacion
+// 	|valor_declaracion_operacion MODULO valor_declaracion_operacion
+// 	|valor_declaracion_operacion POTENCIA valor_declaracion_operacion
+// 	|PA_A valor_declaracion_operacion PA_C
+// 	|valor
+// 	|valor_declaracion_operacion error:e  valor_declaracion_operacion {:
+// 				parser.agregarError("Sintactico",(String)e,"Error de la operacion, se esperaba (+,-,*,/,%,^)", eright+1, eleft+1);
+//     :}
+// 	|error:e  valor_declaracion_operacion {:
+// 				parser.agregarError("Sintactico",(String)e,"Error de la operacion, se esperaba ID(+,-,*,/,%,^)", eright+1, eleft+1);
+//     :}
+// 	|valor_declaracion_operacion error:e {:
+// 				parser.agregarError("Sintactico",(String)e,"Error de la operacion, se esperaba (+,-,*,/,%,^)", eright+1, eleft+1);
+//     :};
 
 /*------------------------------------------------------------------------------VALORES DE DATOS*/
 
@@ -247,19 +247,31 @@ valor ::=
 	|FALSE;
 
 strunt_llamada_funcion ::= 
-	 IDENTIFICADOR PA_A state_params PA_C;
+	 IDENTIFICADOR PA_A state_params PA_C
+	 |IDENTIFICADOR:a PA_A error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en los parametros de la funcion o metodo: "+a, eright+1, eleft+1);
+    :};
 
 
 parametros ::= 
 	 parametros COMA valor_operacion
-    |valor_operacion ;
+    |valor_operacion 
+	|error:e COMA valor_operacion {:
+				parser.agregarError("Sintactico",(String)e,"Error en los parametros", eright+1, eleft+1);
+    :}
+	|valor_operacion error:e {:
+				parser.agregarError("Sintactico",(String)e,"Error en los parametros", eright+1, eleft+1);
+    :};
 
 state_params ::= 
 	 parametros
     | ;
 
 struct_llamada_arreglo ::= 
-	 IDENTIFICADOR dim_arreglo;
+	 IDENTIFICADOR dim_arreglo
+	 |error:e dim_arreglo {:
+				parser.agregarError("Sintactico",(String)e,"Error en la llamada del arreglo", eright+1, eleft+1);
+    :};
 
 /*------------------------------------------------------------------------------TIPO DE DATOS*/
 
@@ -285,7 +297,18 @@ struct_operador_logico ::=
 	|struct_operador_logico NAND struct_operador_logico
 	|NOT PA_A struct_operador_logico PA_C
 	|struct_operador_relacional
-	|valor_operacion;
+	|valor_operacion 
+	|error:e state_op_logicos {:
+                parser.agregarError("Sintactico",(String)e,"Error en la estrucutra logica se esperaba un valor booleano", eright+1, eleft+1);
+    :}
+	| state_op_logicos error:e {:
+                parser.agregarError("Sintactico",(String)e,"Error en la estrucutra logica se esperaba un valor booleano", eright+1, eleft+1);
+    :}
+	|NOT error:e {:
+                parser.agregarError("Sintactico",(String)e,"Error en la estrucutra logica se esperaba un valor booleano para el NOT", eright+1, eleft+1);
+    :};
+
+state_op_logicos::= OR | NOR | XOR | AND | NAND;
 
 struct_operador_relacional ::=	 
 	 valor_operacion IGUAL_IGUAL valor_operacion
@@ -294,9 +317,18 @@ struct_operador_relacional ::=
 	|valor_operacion MENOR_Q valor_operacion
 	|valor_operacion MAYOR_IGUAL valor_operacion
 	|valor_operacion MENOR_IGUAL valor_operacion
-	|IS_NULL valor_operacion;
+	|IS_NULL valor_operacion
+	|state_op_racional error:e {:
+                parser.agregarError("Sintactico",(String)e,"Error en la estrucutra racional se esperaba un valor para comparar", eright+1, eleft+1);
+    :}
+	|error:e state_op_racional {:
+                parser.agregarError("Sintactico",(String)e,"Error en la estrucutra racional se esperaba un valor para comparar", eright+1, eleft+1);
+    :};
+	// |IS_NULL error:e {:
+    //             parser.agregarError("Sintactico",(String)e,"Error en la estrucutra racional se esperaba un valor para ISNULL", eright+1, eleft+1);
+    // :};
 								
-
+state_op_racional ::==  IGUAL_IGUAL | DIFERENTE | MAYOR_Q | MENOR_Q | MAYOR_IGUAL | MENOR_IGUAL;
 
 /*------------------------------------------------------------------------------VALOR OPERACIONAL*/
 
@@ -308,16 +340,33 @@ valor_operacion ::=
 	|valor_operacion MODULO valor_operacion
 	|valor_operacion POTENCIA valor_operacion
 	|PA_A valor_operacion PA_C
-	|valor;
+	|valor
+	|error:e valor_operacion {:
+				parser.agregarError("Sintactico",(String)e,"Error de la operacion, se esperaba s(+,-,*,/,%,^)", eright+1, eleft+1);
+    :}
+	|PA_A error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error de la operacion, se esperaba un valor, u operacion", eright+1, eleft+1);
+    :};
 
 
 struc_asig_var ::= 	 
 	 IDENTIFICADOR IGUAL struct_operador_logico
 	|IDENTIFICADOR MAS_IGUAL struct_operador_logico
-	//|IDENTIFICADOR IGUAL valor_operacion
-	//|IDENTIFICADOR MAS_IGUAL valor_operacion
 	|IDENTIFICADOR MAS_MAS
-	|IDENTIFICADOR MENOS_MENOS;
+	|IDENTIFICADOR MENOS_MENOS
+	|IDENTIFICADOR error struct_operador_logico
+	|error:e IGUAL struct_operador_logico {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un ID", eright+1, eleft+1);
+    :}
+	|error:e MAS_IGUAL struct_operador_logico {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un ID", eright+1, eleft+1);
+    :}
+	|error:e MAS_MAS {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un ID", eright+1, eleft+1);
+    :}
+	|error:e MENOS_MENOS {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un ID", eright+1, eleft+1);
+    :};
 
 /*------------------------------------------------------------------------------Estructura arreglo*/
 
@@ -328,8 +377,6 @@ struct_declaracion_array ::=
 	|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
 	|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR
 	|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo
-							
-	//|struct_declaracion_array COMA IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
 	|error:e tipo_dato ARREGLO IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C {:parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo ID o fallo en la declaracion", eright+1, eleft+1);:}
 	|error:e tipo_dato ARREGLO IDENTIFICADOR {:parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo ID o fallo en la declaracion", eright+1, eleft+1);:}
 	|error:e tipo_dato ARREGLO IDENTIFICADOR dim_arreglo  {:parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo ID o fallo en la declaracion", eright+1, eleft+1);:};
@@ -338,7 +385,13 @@ struct_declaracion_array ::=
 
 dim_arreglo ::=	 
 	 dim_arreglo CORCHETE_A valor_operacion CORCHETE_C
-	|CORCHETE_A valor_operacion CORCHETE_C ;
+	|CORCHETE_A valor_operacion CORCHETE_C
+	|CORCHETE_A error:e CORCHETE_C  {:
+				parser.agregarError("Sintactico",(String)e,"Error en el valor de asignacion de la dimenasion arreglo", eright+1, eleft+1);
+    :}
+	|dim_arreglo CORCHETE_A error:e CORCHETE_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el valor de asignacion de la dimenasion arreglo", eright+1, eleft+1);
+    :};
 
 
 /*------------------------------------------------------------------------------VALORES ARREGLO*/
@@ -351,11 +404,26 @@ valores_array_mas_dim ::=
 	 LLAVE_A valores_array_mas_dim LLAVE_C
 	|valores_array_mas_dim COMA LLAVE_A valores_array_mas_dim LLAVE_C
 	|LLAVE_A valores_array LLAVE_C
-	|valores_array_mas_dim COMA LLAVE_A valores_array LLAVE_C;
+	|valores_array_mas_dim COMA LLAVE_A valores_array LLAVE_C
+	|error:e LLAVE_A valores_array LLAVE_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el valor de asignacion del arreglo", eright+1, eleft+1);
+    :}
+	|error:e LLAVE_A valores_array_mas_dim LLAVE_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el valor de asignacion del arreglo", eright+1, eleft+1);
+    :}
+	|error:e LLAVE_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el valor de asignacion del arreglo", eright+1, eleft+1);
+    :};
 
 valores_array ::=  	 
 	 valores_array COMA tipo_valor_op_logico
-	|tipo_valor_op_logico;
+	|tipo_valor_op_logico
+	|error:e COMA tipo_valor_op_logico {:
+				parser.agregarError("Sintactico",(String)e,"Error en el valor de asignacion del arreglo, se esperaba un valor", eright+1, eleft+1);
+    :}
+	|valores_array error:e tipo_valor_op_logico {:
+				parser.agregarError("Sintactico",(String)e,"Error en el valor de asignacion del arreglo, se esperaba una coma \",\"", eright+1, eleft+1);
+    :};
 
 // tipo_valor_op_logico ::= struct_operador_logico
 // 						|valor_operacion;
@@ -364,18 +432,57 @@ tipo_valor_op_logico ::= struct_operador_logico;
 
 /*------------------------------------------------------------------------------ESTRUCTURA ASIGNACION VALORES ARREGLO*/
 
-struct_asig_arreglo ::=  IDENTIFICADOR dim_arreglo IGUAL tipo_valor_op_logico;
+struct_asig_arreglo ::=  
+	IDENTIFICADOR dim_arreglo IGUAL tipo_valor_op_logico
+	|IDENTIFICADOR dim_arreglo error:e tipo_valor_op_logico {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de arreglo, se esperaba un \"=\"", eright+1, eleft+1);
+    :}
+	|IDENTIFICADOR error:e IGUAL tipo_valor_op_logico {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de arreglo, se esperaba el valor de la dimension [num]...", eright+1, eleft+1);
+    :}
+	|error:e dim_arreglo IGUAL tipo_valor_op_logico {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de arreglo, se esperaba un ID", eright+1, eleft+1);
+    :};
 
 /*------------------------------------------------------------------------------STRUCUTRA DE UNA FUNCION*/
 
 struct_funcion ::=	 
 	 tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C st_ind code_funcion st_ded
 	|KEEP tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C st_ind code_funcion st_ded
-	|RETORNAR;
+	|error:e PA_A struct_parametros PA_C st_ind code_funcion st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de la funcion, se esperaba un \"<tipoDato> ID\"", eright+1, eleft+1);
+    :}
+	|tipo_dato IDENTIFICADOR:a PA_A error:e PA_C st_ind code_funcion st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error el los parametros en la funcion "+a, eright+1, eleft+1);
+    :}
+	|KEEP tipo_dato IDENTIFICADOR:a PA_A error:e PA_C st_ind code_funcion st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error el los parametros en la funcion "+a, eright+1, eleft+1);
+    :}
+	|error:e PA_C st_ind code_funcion st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de la funcion, se esperaba un \"<tipoDato> ID (<parametros>)\"", eright+1, eleft+1);
+    :}
+	|tipo_dato IDENTIFICADOR:a PA_A struct_parametros PA_C st_ind error:e st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de la funcion "+a+", fallo en el bloque de codigo de la funcion", eright+1, eleft+1);
+    :}
+	|KEEP tipo_dato IDENTIFICADOR:a PA_A struct_parametros PA_C st_ind error:e st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de la funcion "+a+", fallo en el bloque de codigo de la funcion", eright+1, eleft+1);
+    :};
 
 struct_procedimiento ::= 
 	 IDENTIFICADOR PA_A struct_parametros PA_C st_ind code_metodo st_ded
-	|KEEP IDENTIFICADOR PA_A struct_parametros PA_C st_ind code_metodo st_ded;
+	|KEEP IDENTIFICADOR PA_A struct_parametros PA_C st_ind code_metodo st_ded
+	|IDENTIFICADOR:a PA_A error:e PA_C st_ind code_metodo st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error el los parametros del metodo "+a, eright+1, eleft+1);
+    :}
+	|IDENTIFICADOR:a PA_A struct_parametros PA_C st_ind error:e st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura del metodo "+a+", fallo en el bloque de codigo de la metodo", eright+1, eleft+1);
+    :}
+	|KEEP IDENTIFICADOR:a PA_A error:e PA_C st_ind code_metodo st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error el los parametros del metodo "+a, eright+1, eleft+1);
+    :}
+	|KEEP IDENTIFICADOR:a PA_A struct_parametros PA_C st_ind error:e st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura del metodo "+a+", fallo en el bloque de codigo de la metodo", eright+1, eleft+1);
+    :};
 
 
 struct_parametros ::=
@@ -384,7 +491,16 @@ struct_parametros ::=
 
 params_lleno ::= 
 	 struct_parametros COMA tipo_dato IDENTIFICADOR
-	|tipo_dato IDENTIFICADOR;
+	|tipo_dato IDENTIFICADOR
+	|tipo_dato error:e {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro, se esperaba un ID", eright+1, eleft+1);
+    :}
+	|struct_parametros COMA error:e {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro, se esperaba un ID", eright+1, eleft+1);
+    :}
+	|error:e COMA tipo_dato IDENTIFICADOR {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro, se esperaba un \"<tipoDato> ID,<tipoDato> ID...\"", eright+1, eleft+1);
+    :};
 
 param_vacio ::= ;
 
@@ -405,8 +521,8 @@ code_funcion ::=
     |struct_sumarizar code_funcion
     |struct_longitud code_funcion
 	|struct_mensaje code_funcion
-				// |error code_funcion
 	|RETORNAR struct_operador_logico code_funcion
+	|RETORNAR error
 	|;
 
 code_metodo ::=
@@ -426,39 +542,108 @@ code_metodo ::=
     |struct_sumarizar code_metodo
     |struct_longitud code_metodo
     |struct_mensaje code_metodo
-				// |error code_metodo
 	|;
 
 
 /*------------------------------------------------------------------------------Funciones reservadas*/
 
-struct_reproducir ::= REPRODUCIR PA_A notas COMA valor_operacion COMA valor_operacion COMA valor_operacion PA_C;
+struct_reproducir ::= 
+	 REPRODUCIR PA_A notas COMA valor_operacion COMA valor_operacion COMA valor_operacion PA_C
+	|REPRODUCIR PA_A error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Reproducir, se esperaba \"(notas , valor , valor , valor)\"", eright+1, eleft+1);
+    :}
+	|REPRODUCIR PA_A notas error:e valor_operacion COMA valor_operacion COMA valor_operacion PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Reproducir, se esperaba \",\"", eright+1, eleft+1);
+    :}
+	|REPRODUCIR PA_A notas COMA valor_operacion error:e valor_operacion COMA valor_operacion PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Reproducir, se esperaba \",\"", eright+1, eleft+1);
+    :}
+	|REPRODUCIR PA_A notas COMA valor_operacion COMA valor_operacion error:e valor_operacion PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Reproducir, se esperaba \",\"", eright+1, eleft+1);
+    :}
+	|REPRODUCIR error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Reproducir, se esperaba \"(\"", eright+1, eleft+1);
+    :};
 
-struct_esperar ::= ESPERAR PA_A valor_operacion COMA valor_operacion PA_C;
+struct_esperar ::= 
+	 ESPERAR PA_A valor_operacion COMA valor_operacion PA_C
+	|ESPERAR PA_A valor_operacion error:e valor_operacion PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Esperar, se esperaba \",\"", eright+1, eleft+1);
+    :}
+	|ESPERAR PA_A error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Esperar, se esperaba \"(valor , valor)\"", eright+1, eleft+1);
+    :}
+	|ESPERAR error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Esperar, se esperaba \"(\"", eright+1, eleft+1);
+    :};
 
-struct_ordenar ::= ORDENAR PA_A IDENTIFICADOR COMA tipo_orden PA_C;
+struct_ordenar ::= 
+	 ORDENAR PA_A IDENTIFICADOR COMA tipo_orden PA_C
+	|ORDENAR PA_A error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Ordenar, se esperaba \"(ID , <tipoOrden>)\"", eright+1, eleft+1);
+    :}
+	|ORDENAR PA_A IDENTIFICADOR error:e tipo_orden PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Ordenar, se esperaba \",\"", eright+1, eleft+1);
+    :}
+	|ORDENAR error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Ordenar, se esperaba \"(\"", eright+1, eleft+1);
+    :};
 
-struct_sumarizar ::= SUMARIZAR PA_A IDENTIFICADOR PA_C;
+struct_sumarizar ::= 
+	 SUMARIZAR PA_A IDENTIFICADOR PA_C
+	|SUMARIZAR PA_A error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Sumarizar, se esperaba un \"ID\"", eright+1, eleft+1);
+    :}
+	|SUMARIZAR error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Sumarizar, se esperaba \"(\"", eright+1, eleft+1);
+    :};
 
-struct_longitud ::= LONGITUD PA_A valor_operacion PA_C;
+struct_longitud ::= 
+	 LONGITUD PA_A valor_operacion PA_C
+	|LONGITUD PA_A error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Longitud, se esperaba un \"valor\"", eright+1, eleft+1);
+    :}
+	|LONGITUD error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Longitud, se esperaba \"(\"", eright+1, eleft+1);
+    :};
 
-struct_mensaje ::= 	 MENSAJE PA_A mensajes PA_C
-					|MENSAJE PA_A PA_C;
+struct_mensaje ::= 	 
+	 MENSAJE PA_A mensajes PA_C
+	|MENSAJE PA_A PA_C
+	|MENSAJE PA_A error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Mensaje, se esperaba un \"<MENSAJE>\"", eright+1, eleft+1);
+    :}
+	|MENSAJE error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Mensaje, se esperaba \"(\"", eright+1, eleft+1);
+    :};
 
-mensajes ::= mensajes MAS struct_operador_logico 
-			|struct_operador_logico;
+mensajes ::= 
+	 mensajes MAS struct_operador_logico 
+	|struct_operador_logico
+	|error:e MAS struct_operador_logico {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Mensaje, se esperaba un \"<MENSAJE>\"", eright+1, eleft+1);
+    :}
+	|mensajes error:e struct_operador_logico {:
+				parser.agregarError("Sintactico",(String)e,"Error en el parametro de la funcion Mensaje, se esperaba un \"<+>\"", eright+1, eleft+1);
+    :};
 
 /*------------------------------------------------------------------------------NOTAS MUSICALES*/
 
 notas ::= 	 DO | RE | MI | FA | SOL | LA | SI 
-			|DO_S | RE_S | FA_S | SOL_S | LA_S;
+			|DO_S | RE_S | FA_S | SOL_S | LA_S
+			|error:e {:
+				parser.agregarError("Sintactico",(String)e,"Error en la nota musical se esperaba una de las notas: \n\"Do, Do#, Re, Re#, Mi, Fa, Fa#, Sol, Sol#, La, La#, Si\"", eright+1, eleft+1);
+    :};
 
 /*------------------------------------------------------------------------------OCTAVAS*/
 
 //octavas ::= 
 /*------------------------------------------------------------------------------TIPO DE ORDEN*/
 
-tipo_orden ::= ASCENDENTE | DESCENDENTE | PARES | IMPARES | PRIMOS ;
+tipo_orden ::= ASCENDENTE | DESCENDENTE | PARES | IMPARES | PRIMOS 
+			|error:e  {:
+				parser.agregarError("Sintactico",(String)e,"Error en el tipo de orden se esperaba un: \n\"<ASCENDENTE | DESCENDENTE | PARES | IMPARES | PRIMOS>\"", eright+1, eleft+1);
+    :};
 
 /*------------------------------------------------------------------------------ORDENACION*/ 
 
@@ -467,47 +652,185 @@ orden_valor ::=  valor_operacion
 
 /*------------------------------------------------------------------------------STRUTURA PRINCIPAL MEOTODO*/
 
-struct_principal ::= PRINCIPAL PA_A PA_C st_ind code_metodo st_ded ;
+struct_principal ::= PRINCIPAL PA_A PA_C st_ind code_metodo st_ded 
+	|PRINCIPAL error:e st_ind code_metodo st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura del metodo Principal, se esperaba \"< ( ) >\"", eright+1, eleft+1);
+    :}
+	|PRINCIPAL PA_A PA_C st_ind error:e st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura del metodo Principal, fallo en el bloque de codigo", eright+1, eleft+1);
+    :};
 
 /*------------------------------------------------------------------------------ESTRUTURA SI-SINO SI-SINO*/
 
-struct_si ::=	SI PA_A struct_operador_logico PA_C st_ind code_funcion st_ded struct_sino;
+struct_si ::=	
+	 SI PA_A struct_operador_logico PA_C st_ind code_funcion st_ded struct_sino
+	|SI PA_A error:e PA_C st_ind code_funcion st_ded struct_sino {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de la sentencias logica, se esperaba una estructura logica", eright+1, eleft+1);
+    :}
+	|SI PA_A struct_operador_logico PA_C st_ind error:e st_ded struct_sino {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de Si, fallo en el bloque de codigo", eright+1, eleft+1);
+    :}
+	|SI error:e st_ind code_funcion st_ded struct_sino {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de Si, se esperaba una \"( estructura logica)\"", eright+1, eleft+1);
+    :}
+	|SI error:e PA_C st_ind code_funcion st_ded struct_sino {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de Si, se esperaba una \"( estructura logica)\"", eright+1, eleft+1);
+    :}
+	|SI error:e st_ded struct_sino {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de Si", eright+1, eleft+1);
+    :};
 
-struct_sino ::=	 SINO_SI PA_A struct_operador_logico PA_C st_ind code_funcion st_ded struct_sino
-				|SINO st_ind code_funcion st_ded
-				|;
+struct_sino ::=	 
+	 SINO_SI PA_A struct_operador_logico PA_C st_ind code_funcion st_ded struct_sino
+	|SINO st_ind code_funcion st_ded
+	|
+	|SINO_SI PA_A error:e PA_C st_ind code_funcion st_ded struct_sino {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de la sentencias logica, se esperaba una estructura logica", eright+1, eleft+1);
+    :}
+	|SINO_SI PA_A struct_operador_logico PA_C st_ind error:e st_ded struct_sino {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de sino si, fallo en el bloque de codigo", eright+1, eleft+1);
+    :}
+	|SINO_SI error:e st_ind code_funcion st_ded struct_sino {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de sino si, se esperaba una \"( estructura logica)\"", eright+1, eleft+1);
+    :}
+	|SINO_SI error:e PA_C st_ind code_funcion st_ded struct_sino {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de sino si, se esperaba una \"( estructura logica)\"", eright+1, eleft+1);
+    :}
+	|SINO_SI error:e st_ded struct_sino {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de sino si", eright+1, eleft+1);
+    :};
 
 /*------------------------------------------------------------------------------ESTRUCTURA SWITCH*/
 
-struct_switch ::= SWITCH PA_A IDENTIFICADOR PA_C st_ind struct_caso st_ded ;
+struct_switch ::= 
+	 SWITCH PA_A IDENTIFICADOR PA_C st_ind struct_caso st_ded 
+	|SWITCH PA_A error:e PA_C st_ind struct_caso st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura del switch, se esperaba un ID", eright+1, eleft+1);
+    :}
+	|SWITCH error:e st_ind struct_caso st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura del switch, se esperaba un (ID)", eright+1, eleft+1);
+    :}
+	|SWITCH PA_A IDENTIFICADOR PA_C st_ind error:e st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura del switch, fallo en el bloque de caso", eright+1, eleft+1);
+    :};
 
-struct_caso ::=  CASO valor_operacion st_ind code_funcion caso_salir st_ded struct_caso
-				|DEFAULT st_ind code_funcion st_ded 
-				|;
+struct_caso ::=  
+ 	 CASO valor_operacion st_ind code_funcion caso_salir st_ded struct_caso
+	|DEFAULT st_ind code_funcion st_ded 
+	|
+	|CASO error:e st_ind code_funcion caso_salir st_ded struct_caso {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura del caso, se esperava un valor", eright+1, eleft+1);
+    :}
+	|CASO valor_operacion st_ind error:e caso_salir st_ded struct_caso {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura del caso, fallo en el bloque de codigo", eright+1, eleft+1);
+    :}
+	|CASO error:e st_ded struct_caso {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura del caso", eright+1, eleft+1);
+    :};
 
 caso_salir ::=   SALIR
 				|;
 
 /*------------------------------------------------------------------------------ESTRUCTURA PARA*/
 
-struct_para ::=	 PARA PA_A para_asig_var PUNTO_COMA condicion_para PUNTO_COMA incremento_para PA_C st_ind code_funcion st_ded ;
+struct_para ::=	 
+	 PARA PA_A para_asig_var PUNTO_COMA condicion_para PUNTO_COMA incremento_para PA_C st_ind code_funcion st_ded 
+	|PARA PA_A error:e condicion_para PUNTO_COMA incremento_para PA_C st_ind code_funcion st_ded  {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de para, se esperaba una \"asignacion de variable ,\"", eright+1, eleft+1);
+    :}
+	|PARA PA_A para_asig_var PUNTO_COMA error:e incremento_para PA_C st_ind code_funcion st_ded  {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de para, se esperaba una \"condicion ,\"", eright+1, eleft+1);
+    :}
+	|PARA PA_A para_asig_var PUNTO_COMA condicion_para PUNTO_COMA error:e PA_C st_ind code_funcion st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de para, se esperaba un \"incremento\"", eright+1, eleft+1);
+    :}
+	|PARA PA_A error:e PA_C st_ind code_funcion st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de para, se esperaba: \"(asignacion,condicion ,incremento)\"", eright+1, eleft+1);
+    :}
+	|PARA PA_A para_asig_var PUNTO_COMA condicion_para PUNTO_COMA incremento_para PA_C st_ind error:e st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura de para, fallo el el bloque de codigo", eright+1, eleft+1);
+    :};
 
-para_asig_var ::=	 VAR tipo_dato IDENTIFICADOR IGUAL valor_operacion
-					|IDENTIFICADOR IGUAL valor_operacion;
+para_asig_var ::=	 
+	VAR tipo_dato IDENTIFICADOR IGUAL valor_operacion
+	|IDENTIFICADOR IGUAL valor_operacion
+	|error:e IDENTIFICADOR IGUAL valor_operacion {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un <tipoDato>", eright+1, eleft+1);
+    :}
+	|VAR tipo_dato error:e IGUAL valor_operacion {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un <ID>", eright+1, eleft+1);
+    :}
+	|VAR tipo_dato IDENTIFICADOR error:e valor_operacion {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un <=>", eright+1, eleft+1);
+    :}
+	|VAR tipo_dato IDENTIFICADOR IGUAL error:e {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un <valor>", eright+1, eleft+1);
+    :}
+	|error:e IGUAL valor_operacion {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un <ID>", eright+1, eleft+1);
+    :}
+	|IDENTIFICADOR error:e valor_operacion {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un <=>", eright+1, eleft+1);
+    :}
+	|IDENTIFICADOR IGUAL error:e {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un <valor>", eright+1, eleft+1);
+    :};
 
 condicion_para ::=	struct_operador_logico;
 
-incremento_para ::=  IDENTIFICADOR IGUAL valor_operacion
-					|IDENTIFICADOR MAS_IGUAL valor_operacion
-					|IDENTIFICADOR MAS_MAS
-					|IDENTIFICADOR MENOS_MENOS;
+incremento_para ::=  
+	 IDENTIFICADOR IGUAL valor_operacion
+	|IDENTIFICADOR MAS_IGUAL valor_operacion
+	|IDENTIFICADOR MAS_MAS
+	|IDENTIFICADOR MENOS_MENOS
+	|error:e IGUAL valor_operacion {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un ID", eright+1, eleft+1);
+    :}
+	|error:e MAS_IGUAL valor_operacion {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un ID", eright+1, eleft+1);
+    :}
+	|error:e MAS_MAS {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un ID", eright+1, eleft+1);
+    :}
+	|error:e MENOS_MENOS {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un ID", eright+1, eleft+1);
+    :};
 
-
+	
 /*------------------------------------------------------------------------------Estrcutura mientras, hacer-mientras, */
 
-struct_mientras ::=	MIENTRAS PA_A struct_operador_logico PA_C st_ind code_funcion st_ded ;
+struct_mientras ::=	
+	 MIENTRAS PA_A struct_operador_logico PA_C st_ind code_funcion st_ded 
+	|MIENTRAS PA_A error:e PA_C st_ind code_funcion st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura mientras, se esperaba un una condicion", eright+1, eleft+1);
+    :}
+	|MIENTRAS PA_A struct_operador_logico PA_C st_ind error:e st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura mientras, fallo el bloque de codigo", eright+1, eleft+1);
+    :}
+	|MIENTRAS error:e PA_C st_ind code_funcion st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura mientras, se esperaba un una \"(condicion)\"", eright+1, eleft+1);
+    :}
+	|MIENTRAS error:e st_ded {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura mientras", eright+1, eleft+1);
+    :};
 
-struct_hacer ::= HACER st_ind code_funcion state_continuar st_ded MIENTRAS PA_A struct_operador_logico PA_C ;
+struct_hacer ::= 
+	 HACER st_ind code_funcion state_continuar st_ded MIENTRAS PA_A struct_operador_logico PA_C
+	|HACER st_ind error:e state_continuar st_ded MIENTRAS PA_A struct_operador_logico PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura hacer, fallo el el bloque de codigo", eright+1, eleft+1);
+    :}
+	|HACER error:e st_ded MIENTRAS PA_A struct_operador_logico PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura hacer, fallo el el bloque de codigo", eright+1, eleft+1);
+    :}
+	|HACER st_ind code_funcion state_continuar st_ded error:e PA_A struct_operador_logico PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura hacer, se esperaba un <mientras>", eright+1, eleft+1);
+    :}
+	|HACER st_ind code_funcion state_continuar st_ded MIENTRAS PA_A error:e PA_C {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura hacer, se esperaba un <condicion>", eright+1, eleft+1);
+    :}
+	|HACER error:e PA_C  {:
+				parser.agregarError("Sintactico",(String)e,"Error en la estructura hacer (", eright+1, eleft+1);
+    :};
 
 state_continuar ::=  CONTINUAR
 					|;
