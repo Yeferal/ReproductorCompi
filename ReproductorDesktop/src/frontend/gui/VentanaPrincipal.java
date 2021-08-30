@@ -21,10 +21,7 @@ import java.util.logging.Logger;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 
-/**
- *
- * @author yeferal
- */
+
 public class VentanaPrincipal extends javax.swing.JFrame {
 
     public LineasText lines;
@@ -141,7 +138,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                // fila = lines.pane.get
                 
             pintarTexto();
-            //lines.pane.setCaretPosition(fila-1);
+            lines.pane.setCaretPosition(fila-1);
         }
     }
 
@@ -202,7 +199,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         paneBotEditor.setLayout(paneBotEditorLayout);
         paneBotEditorLayout.setHorizontalGroup(
             paneBotEditorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1137, Short.MAX_VALUE)
+            .addGap(0, 979, Short.MAX_VALUE)
         );
         paneBotEditorLayout.setVerticalGroup(
             paneBotEditorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -237,14 +234,14 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(noCol, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 855, Short.MAX_VALUE)))
+                        .addGap(0, 736, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         panelCentralEditorLayout.setVerticalGroup(
             panelCentralEditorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelCentralEditorLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(panelCodigo, javax.swing.GroupLayout.DEFAULT_SIZE, 423, Short.MAX_VALUE)
+                .addComponent(panelCodigo, javax.swing.GroupLayout.DEFAULT_SIZE, 319, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(panelCentralEditorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(labelFIla)
@@ -264,14 +261,14 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             panelCentralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelCentralLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 984, Short.MAX_VALUE)
                 .addContainerGap())
         );
         panelCentralLayout.setVerticalGroup(
             panelCentralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelCentralLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 485, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -330,7 +327,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         try {
             sintactico.parse();
         } catch (Exception ex) {
-            Logger.getLogger(VentanaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+            //Logger.getLogger(VentanaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+            
         }
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 

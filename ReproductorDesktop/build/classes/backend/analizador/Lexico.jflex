@@ -7,7 +7,7 @@ import java.util.Stack;
 %%
 %{
 
-    ArrayList<ErrorLexico> listaErrores = new ArrayList<>();
+    public ArrayList<ErrorLexico> listaErrores = new ArrayList<>();
 
     private void agregarError(ErrorLexico errorL){
         listaErrores.add(errorL);
@@ -26,6 +26,7 @@ import java.util.Stack;
 
     //para la identacion
     boolean estadoIdent = false;
+    int contadorAmbito=0, ambitoActual=0;
 
     public Symbol symbol(String value, int size){
         if(!pilaAmbitos.isEmpty()){
@@ -44,7 +45,7 @@ import java.util.Stack;
             }else{
                 //error de identacion
                 System.out.println("Error de identacion");
-                agregarError(new ErrorLexico(yyline + 1,yycolumn + 1, yytext(), "Error de Indentacion"));
+                agregarError(new ErrorLexico(yyline + 1,yycolumn + 1, yytext(), "Error de Indentacion", "Sintactico"));
             }
         }
         return null;
@@ -68,7 +69,7 @@ import java.util.Stack;
             }else{
                 //error de identacion
                 System.out.println("Error de identacion");
-                agregarError(new ErrorLexico(yyline + 1,yycolumn + 1, yytext(), "Error de Indentacion"));
+                agregarError(new ErrorLexico(yyline + 1,yycolumn + 1, yytext(), "Error de Indentacion", "Sintactico"));
             }
         }
         return null;

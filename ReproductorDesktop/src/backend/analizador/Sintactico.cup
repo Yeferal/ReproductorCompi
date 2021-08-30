@@ -9,7 +9,7 @@ import java.util.Stack;
 parser code
 {:
     //codigo
-    ArrayList<ErrorSintactico> listaErrores = new ArrayList<>();
+    public ArrayList<ErrorSintactico> listaErrores = new ArrayList<>();
 
     public void setAccion(String tipo, String mensaje, String accion){
         //listaErrores.add(new ErrorSintactico());
@@ -32,29 +32,28 @@ parser code
 
 	public void agregarError(String tipo, String cadena, String descripcion, int linea, int columna){
         System.out.println("Tipo: "+tipo+"\tCadena: "+cadena+", descripcion: "+descripcion+", Linea: "+linea+", Columna: "+columna);
-		//errores.getErrores().remove(errores.getErrores().size()-1);
-        //errores.agregarError(tipo, cadena, descripcion, new Pos(linea, columna));
+		listaErrores.add(new ErrorSintactico(linea,columna,cadena,descripcion,tipo));
     }
-
-    /*public void syntax_error(Symbol s){
-        try {
-            listaErrores.add(new ErrorSintactico(s.right+1,
-            s.left+1, 
-            (String) s.value, 
-            "Error sintactico en el codigo, en la linea y columna especificada. Revise que su codigo se correcto."));
-            System.out.println((s.right+1)+", Col: "+(s.left+1)+", TokenL: "+s.value+", Descript: "+"Error: Falta el Token \"var\"");
-        } catch (Exception e) {
-            System.out.println("Error " + e.toString());
-        }
-    }*/
 
 
 	public void unrecovered_syntax_error(Symbol cur_token){
-        /*if(cur_token.toString().equals("#0")){
-            errores.agregarError("Sintactico","Fin del archivo", "No se pudo recuperar y seguir analizando, no se encontraron mas tokens.",new Pos(cur_token.left,cur_token.right));
+        if(cur_token.toString().equals("#0")){
+			String message = s.toString();
+			StringBuilder m = new StringBuilder("Error: ");
+			String cadena =  "Fin del archivo";
+			int columna = cur_token.left+1;
+			int linea = cur_token.right+1;
+			agregarError("Sintactico",cadena,"No se pudo recuperar y seguir analizando, no se encontraron mas tokens.", linea, columna);
+            
         }else{
-            errores.agregarError("Sintactico", (String)cur_token.value, "No se pudo recuperar y seguir analizando.",new Pos(cur_token.left,cur_token.right));
-        }*/
+			String message = s.toString();
+			StringBuilder m = new StringBuilder("Error: ");
+			String cadena =  (String)cur_token.value;
+			int columna = cur_token.left+1;
+			int linea = cur_token.right+1;
+			agregarError("Sintactico",cadena,"No se pudo recuperar y seguir analizando.", linea, columna);
+			
+        }
         System.out.println("No se pudo recuperar y seguir analizando, no se encontraron mas tokens.");
     }
 

@@ -2,22 +2,23 @@
 package backend.analizador;
 
 public class ErrorLexico {
-    private int fila, columna;
-    private String token, descripcion;
+    private int linea, columna;
+    private String token, descripcion, tipo;
 
-    public ErrorLexico(int fila, int columna, String token, String descripcion) {
-        this.fila = fila;
+    public ErrorLexico(int linea, int columna, String token, String descripcion, String tipo) {
+        this.linea = linea;
         this.columna = columna;
         this.token = token;
         this.descripcion = descripcion;
+        this.tipo = tipo;
     }
 
-    public int getFila() {
-        return fila;
+    public int getLinea() {
+        return linea;
     }
 
-    public void setFila(int fila) {
-        this.fila = fila;
+    public void setLinea(int linea) {
+        this.linea = linea;
     }
 
     public int getColumna() {

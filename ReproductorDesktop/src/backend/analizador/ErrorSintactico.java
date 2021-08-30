@@ -4,15 +4,16 @@ package backend.analizador;
 import java_cup.runtime.Symbol;
 
 public class ErrorSintactico {
-    private int fila, columna;
-    private String token, descripcion;
+    private int linea, columna;
+    private String token, descripcion, tipo;
     private Symbol simbol;
 
-    public ErrorSintactico(int fila, int columna, String token, String descripcion) {
-        this.fila = fila;
+    public ErrorSintactico(int linea, int columna, String token, String descripcion, String tipo) {
+        this.linea = linea;
         this.columna = columna;
         this.token = token;
         this.descripcion = descripcion;
+        this.tipo = tipo;
     }
 
     public ErrorSintactico(Symbol simbol) {
@@ -21,12 +22,12 @@ public class ErrorSintactico {
     }
     
 
-    public int getFila() {
-        return fila;
+    public int getLinea() {
+        return linea;
     }
 
-    public void setFila(int fila) {
-        this.fila = fila;
+    public void setLinea(int linea) {
+        this.linea = linea;
     }
 
     public int getColumna() {

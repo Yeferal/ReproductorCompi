@@ -1,0 +1,2 @@
+frontend.gui.editor.CUP$AnalizadorSintacticoCode$actions
+frontend.gui.editor.AnalizadorSintacticoCode

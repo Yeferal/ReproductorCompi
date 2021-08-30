@@ -5,10 +5,12 @@
  */
 package reproductordesktop;
 
+import backend.analizador.objetos.Arreglo;
 import frontend.gui.VentanaPrincipal;
 import frontend.gui.editor.AnalizadorLexicoCode;
 import frontend.gui.editor.AnalizadorSintacticoCode;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,12 +25,41 @@ public class Main {
      */
     public static void main(String[] args) {
         
-        String myStr = "\t\tHello planet earth, you are a great planet.";
-        System.out.println(myStr.lastIndexOf("\t"));
-        String myStr1 = "\t\t";
-        System.out.println(myStr1.length());
-        
-        
+//        String myStr = "\t\tHello planet earth, you are a great planet.";
+//        System.out.println(myStr.lastIndexOf("\t"));
+//        String myStr1 = "\t\t";
+//        System.out.println(myStr1.length());
+//        ArrayList<Integer> lista = new ArrayList<>();
+//        lista.add(5);
+//        lista.add(6);
+//        lista.add(7);
+//        lista.add(5);
+//        lista.add(6);
+//        lista.add(7);
+//        lista.add(5);
+//        lista.add(6);
+//        lista.add(7);
+//        lista.add(5);
+//        lista.add(6);
+//        lista.add(7);
+//        Arreglo arre = new Arreglo(lista);
+//        
+//        ArrayList<Integer> listaPos = new ArrayList<>();
+//        listaPos.add(4);
+//        listaPos.add(5);
+//        listaPos.add(6);
+//        listaPos.add(4);
+//        listaPos.add(5);
+//        listaPos.add(6);
+//        listaPos.add(4);
+//        listaPos.add(5);
+//        listaPos.add(6);
+//        listaPos.add(4);
+//        listaPos.add(5);
+//        listaPos.add(6);
+//
+//        System.out.println("Tamanio: "+arre.getTotalPosiciones(lista)+"\n");
+//        System.out.println("posicion: "+arre.getPosicion(listaPos));
         
         VentanaPrincipal ventanaPrincipal = new VentanaPrincipal();
         ventanaPrincipal.setVisible(true);
