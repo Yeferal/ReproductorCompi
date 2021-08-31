@@ -1,0 +1,24 @@
+                                                >>ambito 0
+    funcion3(entero n)                          >>ambito 0
+        int num = 1                             >>ambito 1
+		switch(n)                               >>ambito 1
+			caso 1                              >>ambito 1,2
+				>> Sentencias caso 1            >>ambito 1,2,3
+                int num1 = 1                    >>ambito 1,2,3
+                if()                            >>ambito 1,2,3
+                    num1 = 5                    >>ambito 1,2,3,4
+                else                            >>ambito 1,2,3
+                    num1 = 0                    >>ambito 1,2,3,5
+				salir                           >>ambito 1,2,3
+			caso 2                              >>ambito 1,2
+                int num = 2                         >>ambito 1,2,6
+				>> Sentencias caso 2            >>ambito 1,2,6
+				salir                           >>ambito 1,2,6
+			caso 3                              >>ambito 1,2
+                num1 = 1                        >>ambito 1,2,7 error no existe en el ambito
+                >> Sentencias caso 3            >>ambito 1,2,7
+				salir                           >>ambito 1,2,7
+			default                             >>ambito 1,2
+				>> Sentencias default           >>ambito 1,2,8
+			
+		

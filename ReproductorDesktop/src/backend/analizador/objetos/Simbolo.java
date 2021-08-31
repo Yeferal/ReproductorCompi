@@ -9,27 +9,35 @@ public class Simbolo {
     2. DOBLE
     3. CARACTER
     4. CADENA
-    5. ARRAY_ENTERO
-    6. ARRAY_DOBLE
-    7. ARRAY_CARACTER
-    8. ARRAY_CADENA
-    9. CONST_ENTERO
-    10.CONST_DOBLE
-    11.CONST_CARACTER
-    12.CONST_CADENA
-    13.FUNCION
-    14.PROCEDIMIENTO
-    15.PISTA
+    5. BOOLEAN
+    6. ARRAY_ENTERO
+    7. ARRAY_DOBLE
+    8. ARRAY_CARACTER
+    9. ARRAY_CADENA
+    10.ARRAY_BOOLEAN
+    11.CONST_ENTERO
+    12.CONST_DOBLE
+    13.CONST_CARACTER
+    14.CONST_CADENA
+    15.CONST_BOOLEAN
+    16.FUNCION
+    17.PROCEDIMIENTO
+    18.PISTA
     0. 
     */
     
     private String nombre, tipo;
-    private int ambito, numParams;
+    private int ambito, numParams, tipoReturn;
     private ArrayList<String> tipoParams;
     private Object objeto;
-    private boolean isKeep;
+    private boolean isKeep, isArreglo = false;
 //    private Nodo raiz;
-
+    
+    public Simbolo(String nombre, int ambito) {
+        this.nombre = nombre;
+        this.ambito = ambito;
+    }
+    
     public Simbolo(String nombre, String tipo, int ambito) {
         this.nombre = nombre;
         this.tipo = tipo;
@@ -50,7 +58,8 @@ public class Simbolo {
         this.objeto = objeto;
         this.isKeep = isKeep;
     }
-
+    
+    //si es funcion o metodo
     public Simbolo(String nombre, String tipo, int ambito, int numParams, Object objeto, boolean isKeep) {
         this.nombre = nombre;
         this.tipo = tipo;
@@ -59,7 +68,7 @@ public class Simbolo {
         this.objeto = objeto;
         this.isKeep = isKeep;
     }
-
+    //si es funcion o metodo
     public Simbolo(String nombre, String tipo, int ambito, int numParams, ArrayList<String> tipoParams, Object objeto, boolean isKeep) {
         this.nombre = nombre;
         this.tipo = tipo;
@@ -124,6 +133,22 @@ public class Simbolo {
 
     public void setIsKeep(boolean isKeep) {
         this.isKeep = isKeep;
+    }
+
+    public int getTipoReturn() {
+        return tipoReturn;
+    }
+
+    public void setTipoReturn(int tipoReturn) {
+        this.tipoReturn = tipoReturn;
+    }
+
+    public boolean isIsArreglo() {
+        return isArreglo;
+    }
+
+    public void setIsArreglo(boolean isArreglo) {
+        this.isArreglo = isArreglo;
     }
     
     

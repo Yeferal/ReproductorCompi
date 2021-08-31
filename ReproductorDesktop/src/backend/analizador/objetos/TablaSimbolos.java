@@ -26,4 +26,26 @@ public class TablaSimbolos {
     public int posicionSimbolo;
     private ArrayList<Simbolo> listaSimbolos = new ArrayList<>();
     
+    public void agregarSimbolo(Simbolo s){
+        listaSimbolos.add(s);
+    }
+
+    public int getPosicionSimbolo() {
+        return posicionSimbolo;
+    }
+
+    public void setPosicionSimbolo(int posicionSimbolo) {
+        this.posicionSimbolo = posicionSimbolo;
+    }
+
+    public ArrayList<Simbolo> getListaSimbolos() {
+        return listaSimbolos;
+    }
+
+    public void setListaSimbolos(ArrayList<Simbolo> listaSimbolos) {
+        this.listaSimbolos = listaSimbolos;
+    }
+    
+    
+    
 }

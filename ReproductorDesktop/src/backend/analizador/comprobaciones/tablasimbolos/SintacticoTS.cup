@@ -3,6 +3,7 @@ package backend.analizador.comprobaciones.tablasimbolos;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
 import java.util.Stack;
+import backend.analizador.objetos.*;
 
 
 //Codigo para el parser, variables, metodos
@@ -44,16 +45,15 @@ parser code
 
 action code
 {:
-    Stack<Integer> pilaAmbitos = new Stack();
-	int ambitoFlag = 0, ambito=0;
-    public void iniciar(){
-        pilaAmbitos.push(0);
-    }
+	public TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    public ManejadorTablaSimbolos manejadorTablaSimbolos = new ManejadorTablaSimbolos(tablaSimbolos);
 :}
 
 //Declaraciones 
 //terminal COMENTARIO_LINEA, COMENTARIO_BLOQUE;
-terminal PISTA, IDENTIFICADOR, EXTIENDE, COMA, PUNTO_COMA;
+terminal PISTA;
+terminal String IDENTIFICADOR;
+terminal EXTIENDE, COMA, PUNTO_COMA;
 terminal ENTERO, DOBLE, BOOLEAN, CARACTER_RSV, CADENA_RSV;
 terminal IGUAL_IGUAL, DIFERENTE, MAYOR_Q, MENOR_Q, MAYOR_IGUAL, MENOR_IGUAL, IS_NULL;
 terminal AND, NAND, OR, NOR, XOR, NOT;
@@ -62,7 +62,7 @@ terminal KEEP, VAR, IGUAL;
 terminal Integer NUMERO;
 terminal Double DECIMAL;
 terminal String CADENA;
-terminal BOOLEAN TRUE, FALSE;
+terminal Boolean TRUE, FALSE;
 terminal String CARACTER;
 terminal MAS_IGUAL, MAS_MAS, MENOS_MENOS;
 terminal ARREGLO, CORCHETE_A, CORCHETE_C, LLAVE_A, LLAVE_C;
@@ -78,22 +78,24 @@ terminal INDENT, DEDENT;
 
 // declaracion no terminales
 //non terminal String INICIO, blanco, comentarios, codigo, struct_pista, struct_extiende;
-non terminal String INICIO, blanco, codigo, struct_pista, struct_extiende;
-non terminal String extiende_state, struc_code, struct_declaracion_var, keep_state;
-non terminal String valor_declaracion_operacion, valor, struc_asig_var, tipo_dato;
-non terminal String struct_operador_logico, valor_operacion, struct_declaracion_array;
-non terminal String dim_arreglo, valor_arreglo, valores_array;
-non terminal String struct_si, struct_sino, struct_switch;
-non terminal String state_tab, struct_asig_arreglo;
-non terminal String struct_para, struct_mientras;
-non terminal String struct_hacer, struct_funcion, struct_procedimiento, struct_reproducir;
-non terminal String struct_esperar, struct_ordenar, struct_sumarizar, struct_longitud;
-non terminal String struct_mensaje, struct_principal;
-non terminal String strunt_llamada_funcion, struct_llamada_arreglo, parametros, state_params;
-non terminal String para_asig_var, condicion_para, incremento_para, struct_parametros;
-non terminal String notas, tipo_orden, struct_operador_relacional;
-non terminal String tipo_valor_op_logico, mensajes;
-non terminal String st_ind, st_ded, st_final, code_funcion, code_metodo, caso_salir, state_continuar, struct_caso ;
+non terminal  INICIO, blanco, codigo, struct_pista, struct_extiende;
+non terminal  extiende_state, struc_code, struct_declaracion_var;
+non terminal Boolean keep_state;
+non terminal  valor_declaracion_operacion, valor, struc_asig_var;
+non terminal String tipo_dato;
+non terminal  struct_operador_logico, valor_operacion, struct_declaracion_array;
+non terminal  dim_arreglo, valor_arreglo, valores_array;
+non terminal  struct_si, struct_sino, struct_switch;
+non terminal  state_tab, struct_asig_arreglo;
+non terminal  struct_para, struct_mientras;
+non terminal  struct_hacer, struct_funcion, struct_procedimiento, struct_reproducir;
+non terminal  struct_esperar, struct_ordenar, struct_sumarizar, struct_longitud;
+non terminal  struct_mensaje, struct_principal;
+non terminal  strunt_llamada_funcion, struct_llamada_arreglo, parametros, state_params;
+non terminal  para_asig_var, condicion_para, incremento_para, struct_parametros;
+non terminal  notas, tipo_orden, struct_operador_relacional;
+non terminal  tipo_valor_op_logico, mensajes;
+non terminal  st_ind, st_ded, st_final, code_funcion, code_metodo, caso_salir, state_continuar, struct_caso ;
 non terminal params_lleno, param_vacio, valores_array_mas_dim, especiales_q_retornan;
 non terminal state_op_logicos, state_op_racional;
 /*non terminal ;
@@ -131,9 +133,9 @@ blanco ::= 	 INDENT blanco DEDENT blanco
 
 /*------------------------------------------------------------------------------ESTADOS DE INDENT y DEDENT*/
 
-st_ind ::=   INDENT;
+st_ind ::=   INDENT {:manejadorTablaSimbolos.indent();:};
 
-st_ded ::=   DEDENT;
+st_ded ::=   DEDENT {:manejadorTablaSimbolos.dedent();:};
 
 st_final ::= DEDENT
             |;
@@ -150,7 +152,14 @@ codigo ::= 	 struct_pista codigo
 /*------------------------------------------------------------------------------ESTRUCTURA DE PISTA*/
 
 struct_pista ::= 
-	 PISTA IDENTIFICADOR extiende_state st_ind struc_code st_final;
+	 PISTA IDENTIFICADOR:a {:
+				Simbolo s = new Simbolo(a,"PISTA",manejadorTablaSimbolos.ambitoFlag);
+				if(manejadorTablaSimbolos.isExistSimbolo(s)){
+					manejadorTablaSimbolos.agregarSimbolo(s);
+				}else{
+					parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+				}
+	:} extiende_state st_ind struc_code st_final;
 
 /*------------------------------------------------------------------------------ESTADO EXTIENDE O NO*/
 
@@ -172,41 +181,84 @@ struc_code ::=	 struct_declaracion_var struc_code
 /*------------------------------------------------------------------------------ESTRUCTURA DE DECLARACION DE VARIABLES*/
 
 struct_declaracion_var ::=	 
-	 struct_declaracion_var COMA IDENTIFICADOR
+	 struct_declaracion_var:ss COMA IDENTIFICADOR:a {:
+				Simbolo sAux =(Simbolo) ss;
+				Simbolo s = new Simbolo(a,sAux.getTipo(),manejadorTablaSimbolos.ambitoFlag,sAux.isIsKeep());
+				if(manejadorTablaSimbolos.isExistSimbolo(s)){
+					manejadorTablaSimbolos.agregarSimbolo(s);
+				}else{
+					parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+				}
+				RESULT = s;
+	:}
 	|struct_declaracion_var COMA IDENTIFICADOR IGUAL struct_operador_logico
-	|keep_state VAR tipo_dato IDENTIFICADOR IGUAL struct_operador_logico
-	|keep_state VAR tipo_dato IDENTIFICADOR;
+	|keep_state:k VAR tipo_dato:t IDENTIFICADOR:a IGUAL struct_operador_logico
+	|keep_state:k VAR tipo_dato:t IDENTIFICADOR:a {:
+				Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,k);
+				if(manejadorTablaSimbolos.isExistSimbolo(s)){
+					manejadorTablaSimbolos.agregarSimbolo(s);
+				}else{
+					parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+				}
+				RESULT = s;
+	:};
 
 /*------------------------------------------------------------------------------ESTADO KEEP*/
 
-keep_state ::=   KEEP 
-                | ;
+keep_state ::=   KEEP {:RESULT = true;:}
+                | {:RESULT = false;:};
 
 /*------------------------------------------------------------------------------VALORES DE DATOS*/
 
 valor ::=	 
-	 IDENTIFICADOR
-	|strunt_llamada_funcion
-	|struct_llamada_arreglo
-	|especiales_q_retornan
-	|NUMERO
-	|DECIMAL
-	|CADENA
-	|CARACTER
-	|TRUE
-	|FALSE;
+	 IDENTIFICADOR:a {:
+	 			Simbolo s = new Simbolo(a,manejadorTablaSimbolos.ambitoFlag);
+				if(manejadorTablaSimbolos.buscarSimbolo(s)){
+					s = manejadorTablaSimbolos.getSimbolo();
+					RESULT = s.getTipo();
+				}else{
+					parser.agregarError("Semantico",a,"Error: No existe un simbolo con el nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+				}
+				
+	:}
+	|strunt_llamada_funcion:r {:RESULT = r;:}
+	|struct_llamada_arreglo:r {:RESULT = r;:}
+	|especiales_q_retornan:r {:RESULT = r;:}
+	|NUMERO {:RESULT = "ENTERO";:}
+	|DECIMAL {:RESULT = "DOBLE";:}
+	|CADENA {:RESULT = "CADENA";:}
+	|CARACTER {:RESULT = "CARACTER";:}
+	|TRUE {:RESULT = "BOOLEAN";:}
+	|FALSE {:RESULT = "BOOLEAN";:};
 
 strunt_llamada_funcion ::= 
-	 IDENTIFICADOR PA_A state_params PA_C;
+	 IDENTIFICADOR:a PA_A state_params:p PA_C {:
+	 			Simbolo s = new Simbolo(a,manejadorTablaSimbolos.ambitoFlag);
+				if(manejadorTablaSimbolos.buscarSimboloFuncionMetodo(s,"FUNCION")){
+					s = manejadorTablaSimbolos.getSimbolo();
+					RESULT = s.getTipo();
+				}else{
+					parser.agregarError("Semantico",a,"Error: No existe una funcion con el nombre \""+a+"\" y parametros", aright+1, aleft+1);
+				}
+				
+	:};
 
 
 parametros ::= 
-	 parametros COMA valor_operacion
-    |valor_operacion;
+	 parametros:ar COMA valor_operacion:r {:
+				ArrayList<String> params = ar;
+				params.add(r);
+				RESULT = params;
+	:}
+    |valor_operacion:r {:
+				ArrayList<String> params = new ArrayList<>();
+				params.add(r);
+				RESULT = params;
+	:};
 
 state_params ::= 
-	 parametros
-    | ;
+	 parametros:r {:RESULT = r;:}
+    | {:ArrayList<String> params = new ArrayList<>();:};
 
 struct_llamada_arreglo ::= 
 	 IDENTIFICADOR dim_arreglo;
@@ -214,38 +266,35 @@ struct_llamada_arreglo ::=
 /*------------------------------------------------------------------------------TIPO DE DATOS*/
 
 tipo_dato ::=	 
-	 DOBLE
-	|ENTERO
-	|CARACTER_RSV
-	|CADENA_RSV
-	|BOOLEAN;
+	 DOBLE {:RESULT = "DOBLE";:}
+	|ENTERO {:RESULT = "ENTERO";:}
+	|CARACTER_RSV {:RESULT = "CARACTER";:}
+	|CADENA_RSV {:RESULT = "CADENA";:}
+	|BOOLEAN {:RESULT = "BOOLEAN";:};
 
 
 /*------------------------------------------------------------------------------ESTRUCTURA LOGICA*/
 
 struct_operador_logico ::=	 
-	 struct_operador_logico OR struct_operador_logico
-	|struct_operador_logico NOR struct_operador_logico
-	|struct_operador_logico XOR struct_operador_logico
-	|struct_operador_logico AND struct_operador_logico
-	|struct_operador_logico NAND struct_operador_logico
-	|NOT PA_A struct_operador_logico PA_C
-	|struct_operador_relacional
-	|valor_operacion ;
+	 struct_operador_logico OR struct_operador_logico {:RESULT = "BOOLEAN";:}
+	|struct_operador_logico NOR struct_operador_logico {:RESULT = "BOOLEAN";:}
+	|struct_operador_logico XOR struct_operador_logico {:RESULT = "BOOLEAN";:}
+	|struct_operador_logico AND struct_operador_logico {:RESULT = "BOOLEAN";:}
+	|struct_operador_logico NAND struct_operador_logico {:RESULT = "BOOLEAN";:}
+	|NOT PA_A struct_operador_logico PA_C {:RESULT = "BOOLEAN";:}
+	|struct_operador_relacional:r {:RESULT = r;:}
+	|valor_operacion:r {:RESULT = r;:} ;
 
 state_op_logicos::= OR | NOR | XOR | AND | NAND;
 
 struct_operador_relacional ::=	 
-	 valor_operacion IGUAL_IGUAL valor_operacion
-	|valor_operacion DIFERENTE valor_operacion
-	|valor_operacion MAYOR_Q valor_operacion
-	|valor_operacion MENOR_Q valor_operacion
-	|valor_operacion MAYOR_IGUAL valor_operacion
-	|valor_operacion MENOR_IGUAL valor_operacion
-	|IS_NULL valor_operacion;
-	// |IS_NULL error:e {:
-    //             parser.agregarError("Sintactico",(String)e,"Error en la estrucutra racional se esperaba un valor para ISNULL", eright+1, eleft+1);
-    // :};
+	 valor_operacion IGUAL_IGUAL valor_operacion {:RESULT = "BOOLEAN";:}
+	|valor_operacion DIFERENTE valor_operacion {:RESULT = "BOOLEAN";:}
+	|valor_operacion MAYOR_Q valor_operacion {:RESULT = "BOOLEAN";:}
+	|valor_operacion MENOR_Q valor_operacion {:RESULT = "BOOLEAN";:}
+	|valor_operacion MAYOR_IGUAL valor_operacion {:RESULT = "BOOLEAN";:}
+	|valor_operacion MENOR_IGUAL valor_operacion {:RESULT = "BOOLEAN";:}
+	|IS_NULL valor_operacion {:RESULT = "BOOLEAN";:};
 								
 state_op_racional ::==  IGUAL_IGUAL | DIFERENTE | MAYOR_Q | MENOR_Q | MAYOR_IGUAL | MENOR_IGUAL;
 
@@ -253,13 +302,13 @@ state_op_racional ::==  IGUAL_IGUAL | DIFERENTE | MAYOR_Q | MENOR_Q | MAYOR_IGUA
 
 valor_operacion ::=	 
 	 valor_operacion MAS valor_operacion
-	|valor_operacion MENOS valor_operacion
+	|valor_operacion MENOS valor_operacion {:RESULT = "BOOLEAN";:}
 	|valor_operacion POR valor_operacion
 	|valor_operacion DIVISION valor_operacion
 	|valor_operacion MODULO valor_operacion
 	|valor_operacion POTENCIA valor_operacion
-	|PA_A valor_operacion PA_C
-	|valor;
+	|PA_A valor_operacion:r PA_C {:RESULT = r;:}
+	|valor:r  {:RESULT = r;:};
 
 
 struc_asig_var ::= 	 
@@ -474,9 +523,9 @@ state_continuar ::=  CONTINUAR
 
 
 especiales_q_retornan ::=
-	 struct_reproducir
-    |struct_sumarizar
-    |struct_longitud;
+	 struct_reproducir {: RESULT = "ENTERO";:}
+    |struct_sumarizar {: RESULT = "CADENA"; :}
+    |struct_longitud {: RESULT = "ENTERO"; :};
 
 
 
