@@ -47,6 +47,8 @@ action code
 {:
 	public TablaSimbolos tablaSimbolos = new TablaSimbolos();
     public ManejadorTablaSimbolos manejadorTablaSimbolos = new ManejadorTablaSimbolos(tablaSimbolos);
+	public ComprobacionTipos comprobacionTipos = new ComprobacionTipos();
+	boolean reportar = true;
 :}
 
 //Declaraciones 
@@ -82,10 +84,10 @@ non terminal  INICIO, blanco, codigo, struct_pista, struct_extiende;
 non terminal  extiende_state, struc_code, struct_declaracion_var;
 non terminal Boolean keep_state;
 non terminal  valor_declaracion_operacion;
-non terminal String valor, struc_asig_var;
+non terminal Simbolo valor, struc_asig_var;
 non terminal String tipo_dato;
-non terminal struct_operador_logico;
-non terminal String valor_operacion;
+non terminal Simbolo struct_operador_logico;
+non terminal Simbolo valor_operacion;
 non terminal struct_declaracion_array;
 non terminal  dim_arreglo, valor_arreglo, valores_array;
 non terminal  struct_si, struct_sino, struct_switch;
@@ -195,8 +197,44 @@ struct_declaracion_var ::=
 				}
 				RESULT = s;
 	:}
-	|struct_declaracion_var COMA IDENTIFICADOR IGUAL struct_operador_logico
-	|keep_state:k VAR tipo_dato:t IDENTIFICADOR:a IGUAL struct_operador_logico
+	|struct_declaracion_var:r COMA IDENTIFICADOR:a IGUAL struct_operador_logico:vr {:
+				Simbolo s = null;
+				Simbolo sr1 = (Simbolo) r;
+				Simbolo sr = (Simbolo) vr;
+				if(reportar && vr!=null){
+					s = new Simbolo(a,sr1.getTipo(),manejadorTablaSimbolos.ambitoFlag,sr1.isIsKeep());
+					if(manejadorTablaSimbolos.isExistSimbolo(s)){
+						if(comprobacionTipos.getTipoDato(sr1.getTipo(),sr.getTipo())!=null ){
+							s.setObjeto(comprobacionTipos.convertir(vr.getObjeto(),sr.getTipo()));
+							manejadorTablaSimbolos.agregarSimbolo(s);
+						}else{
+							parser.agregarError("Semantico",a,"Error: no es posible asignar el valor a la varible nombre \""+a+"\", ya que no es del mismo tipo dato", vrright+1, vrleft+1);
+						}
+						
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
+				}
+				RESULT = s;
+	:}
+	|keep_state:k VAR tipo_dato:t IDENTIFICADOR:a IGUAL struct_operador_logico:vr {:
+				Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,k);
+				Simbolo sr = (Simbolo) vr;
+				if(reportar && vr!=null){
+					if(manejadorTablaSimbolos.isExistSimbolo(s)){
+						if(comprobacionTipos.getTipoDato(s.getTipo(),sr.getTipo())!=null ){
+							s.setObjeto(comprobacionTipos.convertir(sr.getObjeto(),sr.getTipo()));
+							manejadorTablaSimbolos.agregarSimbolo(s);
+						}else{
+							parser.agregarError("Semantico",a,"Error: no es posible asignar el valor a la varible nombre \""+a+"\", ya que no es del mismo tipo dato", vrright+1, vrleft+1);
+						}
+						
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
+				}
+				RESULT = s;
+	:}
 	|keep_state:k VAR tipo_dato:t IDENTIFICADOR:a {:
 				Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,k);
 				if(manejadorTablaSimbolos.isExistSimbolo(s)){
@@ -219,21 +257,41 @@ valor ::=
 	 			Simbolo s = new Simbolo(a,manejadorTablaSimbolos.ambitoFlag);
 				if(manejadorTablaSimbolos.buscarSimbolo(s)){
 					s = manejadorTablaSimbolos.getSimbolo();
-					RESULT = s.getTipo();
+					RESULT = s;
 				}else{
-					parser.agregarError("Semantico",a,"Error: No existe un simbolo con el nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					if(reportar){
+						parser.agregarError("Semantico",a,"Error: No existe un simbolo con el nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
+					
 				}
-				
 	:}
-	|strunt_llamada_funcion:r {:RESULT = r;:}
-	|struct_llamada_arreglo:r {:RESULT = r;:}
-	|especiales_q_retornan:r {:RESULT = r;:}
-	|NUMERO {:RESULT = "ENTERO";:}
-	|DECIMAL {:RESULT = "DOBLE";:}
-	|CADENA {:RESULT = "CADENA";:}
-	|CARACTER {:RESULT = "CARACTER";:}
-	|TRUE {:RESULT = "BOOLEAN";:}
-	|FALSE {:RESULT = "BOOLEAN";:};
+	|strunt_llamada_funcion:r {:RESULT = (Simbolo) r;:}
+	|struct_llamada_arreglo:r {:RESULT = (Simbolo) r;:}
+	|especiales_q_retornan:r {:RESULT = (Simbolo) r;:}
+	|NUMERO:a {:
+			Simbolo s = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag,(Integer)a);
+			RESULT = s;
+	:}
+	|DECIMAL:a {:
+			Simbolo s = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(Double)a);
+			RESULT = s;
+	:}
+	|CADENA:a {:
+			Simbolo s = new Simbolo("CADENA","CADENA",manejadorTablaSimbolos.ambitoFlag,(String)a);
+			RESULT = s;
+	:}
+	|CARACTER:a {:
+			Simbolo s = new Simbolo("CARACTER","CARACTER",manejadorTablaSimbolos.ambitoFlag,a);
+			RESULT = s;
+	:}
+	|TRUE {:
+			Simbolo s = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,true);
+			RESULT = s;
+	:}
+	|FALSE {:
+			Simbolo s = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,false);
+			RESULT = s;
+	:};
 
 strunt_llamada_funcion ::= 
 	 IDENTIFICADOR:a PA_A state_params:p PA_C {:
@@ -242,21 +300,29 @@ strunt_llamada_funcion ::=
 					s = manejadorTablaSimbolos.getSimbolo();
 					RESULT = s.getTipo();
 				}else{
-					parser.agregarError("Semantico",a,"Error: No existe una funcion con el nombre \""+a+"\" y parametros", aright+1, aleft+1);
+					if(reportar){
+						parser.agregarError("Semantico",a,"Error: No existe una funcion con el nombre \""+a+"\" y parametros", aright+1, aleft+1);
+					}
 				}
-				
 	:};
 
 
 parametros ::= 
 	 parametros:ar COMA valor_operacion:r {:
 				ArrayList<String> params = ar;
-				params.add(r);
+				if(r!=null){
+					Simbolo s = (Simbolo)r;
+					params.add(s.getTipo());
+				}
 				RESULT = params;
 	:}
     |valor_operacion:r {:
 				ArrayList<String> params = new ArrayList<>();
-				params.add(r);
+				if(r!=null){
+					Simbolo s = (Simbolo)r;
+					params.add(s.getTipo());
+				}
+				
 				RESULT = params;
 	:};
 
@@ -280,37 +346,169 @@ tipo_dato ::=
 /*------------------------------------------------------------------------------ESTRUCTURA LOGICA*/
 
 struct_operador_logico ::=	 
-	 struct_operador_logico OR struct_operador_logico {:RESULT = "BOOLEAN";:}
-	|struct_operador_logico NOR struct_operador_logico {:RESULT = "BOOLEAN";:}
-	|struct_operador_logico XOR struct_operador_logico {:RESULT = "BOOLEAN";:}
-	|struct_operador_logico AND struct_operador_logico {:RESULT = "BOOLEAN";:}
-	|struct_operador_logico NAND struct_operador_logico {:RESULT = "BOOLEAN";:}
-	|NOT PA_A struct_operador_logico PA_C {:RESULT = "BOOLEAN";:}
-	|struct_operador_relacional:r {:RESULT = r;:}
+	 struct_operador_logico OR struct_operador_logico {::}
+	|struct_operador_logico NOR struct_operador_logico {::}
+	|struct_operador_logico XOR struct_operador_logico {::}
+	|struct_operador_logico AND struct_operador_logico {::}
+	|struct_operador_logico NAND struct_operador_logico {::}
+	|NOT PA_A struct_operador_logico PA_C {::}
+	|struct_operador_relacional:r {:RESULT = (Simbolo) r;:}
 	|valor_operacion:r {:RESULT = r;:} ;
 
 state_op_logicos::= OR | NOR | XOR | AND | NAND;
 
 struct_operador_relacional ::=	 
-	 valor_operacion IGUAL_IGUAL valor_operacion {:RESULT = "BOOLEAN";:}
-	|valor_operacion DIFERENTE valor_operacion {:RESULT = "BOOLEAN";:}
-	|valor_operacion MAYOR_Q valor_operacion {:RESULT = "BOOLEAN";:}
-	|valor_operacion MENOR_Q valor_operacion {:RESULT = "BOOLEAN";:}
-	|valor_operacion MAYOR_IGUAL valor_operacion {:RESULT = "BOOLEAN";:}
-	|valor_operacion MENOR_IGUAL valor_operacion {:RESULT = "BOOLEAN";:}
-	|IS_NULL valor_operacion {:RESULT = "BOOLEAN";:};
+	 valor_operacion IGUAL_IGUAL valor_operacion {::}
+	|valor_operacion DIFERENTE valor_operacion {::}
+	|valor_operacion MAYOR_Q valor_operacion {::}
+	|valor_operacion MENOR_Q valor_operacion {::}
+	|valor_operacion MAYOR_IGUAL valor_operacion {::}
+	|valor_operacion MENOR_IGUAL valor_operacion {::}
+	|IS_NULL valor_operacion {::};
 								
 state_op_racional ::==  IGUAL_IGUAL | DIFERENTE | MAYOR_Q | MENOR_Q | MAYOR_IGUAL | MENOR_IGUAL;
 
 /*------------------------------------------------------------------------------VALOR OPERACIONAL*/
 
 valor_operacion ::=	 
-	 valor_operacion MAS valor_operacion
-	|valor_operacion MENOS valor_operacion {:RESULT = "BOOLEAN";:}
-	|valor_operacion POR valor_operacion
-	|valor_operacion DIVISION valor_operacion
-	|valor_operacion MODULO valor_operacion
-	|valor_operacion POTENCIA valor_operacion
+	 valor_operacion:r1 MAS:o valor_operacion:r2 {:
+				Simbolo s1 = r1;
+				Simbolo s2 = r2;
+				Simbolo sr = null;
+				if(reportar && (s1!=null && s2!=null)){
+					if((s1.getTipo().equals("CADENA") || s2.getTipo().equals("CADENA"))){
+						sr = new Simbolo("CADENA","CADENA",manejadorTablaSimbolos.ambitoFlag,(String) s1.getObjeto()+""+(String)s2.getObjeto() );
+					}else{
+						if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("ENTERO")){
+							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag,(((int)s1.getObjeto().toString().charAt(0))+(int)s2.getObjeto()));
+						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("CARACTER")){
+							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag, ((int)s1.getObjeto())+((int)s1.getObjeto().toString().charAt(0)));
+						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("ENTERO")){
+							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag, ((int)s2.getObjeto())+(int)s2.getObjeto());
+						}else if((s1.getTipo().equals("ENTERO") && s2.getTipo().equals("DOBLE")) || (s1.getTipo().equals("DOBLE") && s2.getTipo().equals("ENTERO"))){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)s2.getObjeto())+(double)s2.getObjeto());
+						}else{
+							parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"+\"", oright+1, oleft+1);
+						}
+					}
+				}
+				RESULT = sr;
+	:}
+	|valor_operacion:r1 MENOS:o valor_operacion:r2 {:
+				Simbolo s1 = r1;
+				Simbolo s2 = r2;
+				Simbolo sr = null;
+				if(reportar && (s1!=null && s2!=null)){
+					if((!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA"))){
+						parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"-\", no es posible realizar esta operacion entre cadenas", oright+1, oleft+1);
+					}else{
+						if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("ENTERO")){
+							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag,(((int)s1.getObjeto().toString().charAt(0))-(int)s2.getObjeto()));
+						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("CARACTER")){
+							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag, ((int)s1.getObjeto())-((int)s1.getObjeto().toString().charAt(0)));
+						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("ENTERO")){
+							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag, ((int)s2.getObjeto())-(int)s2.getObjeto());
+						}else if((s1.getTipo().equals("ENTERO") && s2.getTipo().equals("DOBLE")) || (s1.getTipo().equals("DOBLE") && s2.getTipo().equals("ENTERO"))){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)s2.getObjeto())-(double)s2.getObjeto());
+						}else{
+							parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"-\"", oright+1, oleft+1);
+						}
+					}
+				}
+				RESULT = sr;
+	:}
+	|valor_operacion:r1 POR:o valor_operacion:r2 {:
+				Simbolo s1 = r1;
+				Simbolo s2 = r2;
+				Simbolo sr = null;
+				if(reportar && (s1!=null && s2!=null)){
+					if((!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA"))){
+						parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"*\", no es posible realizar esta operacion entre cadenas", oright+1, oleft+1);
+					}else{
+						if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("ENTERO")){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double)(((int)s1.getObjeto().toString().charAt(0))*(int)s2.getObjeto()));
+						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("CARACTER")){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)((int)s1.getObjeto())*((int)s1.getObjeto().toString().charAt(0))));
+						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("ENTERO")){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)((int)s2.getObjeto())*(int)s2.getObjeto()));
+						}else if((s1.getTipo().equals("ENTERO") && s2.getTipo().equals("DOBLE")) || (s1.getTipo().equals("DOBLE") && s2.getTipo().equals("ENTERO"))){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)s2.getObjeto())*(double)s2.getObjeto());
+						}else{
+							parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"*\"", oright+1, oleft+1);
+						}
+					}
+				}
+				RESULT = sr;
+	:}
+	|valor_operacion:r1 DIVISION:o valor_operacion:r2 {:
+				Simbolo s1 = r1;
+				Simbolo s2 = r2;
+				Simbolo sr = null;
+				if(reportar && (s1!=null && s2!=null)){
+					if((!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA"))){
+						parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"/\", no es posible realizar esta operacion entre cadenas", oright+1, oleft+1);
+					}else{
+						if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("ENTERO")){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double)(((int)s1.getObjeto().toString().charAt(0))/(int)s2.getObjeto()));
+						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("CARACTER")){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((int)s1.getObjeto())/((int)s1.getObjeto().toString().charAt(0))));
+						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("ENTERO")){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((int)s2.getObjeto())/(int)s2.getObjeto()));
+						}else if((s1.getTipo().equals("ENTERO") && s2.getTipo().equals("DOBLE")) || (s1.getTipo().equals("DOBLE") && s2.getTipo().equals("ENTERO"))){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((double)s2.getObjeto())/(double)s2.getObjeto()));
+						}else{
+							parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"/\"", oright+1, oleft+1);
+						}
+					}
+				}
+				RESULT = sr;
+	:}
+	|valor_operacion:r1 MODULO:o valor_operacion:r2 {:
+				Simbolo s1 = r1;
+				Simbolo s2 = r2;
+				Simbolo sr = null;
+				if(reportar && (s1!=null && s2!=null)){
+					if((!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA"))){
+						parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"%\", no es posible realizar esta operacion entre cadenas", oright+1, oleft+1);
+					}else{
+						if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("ENTERO")){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((int)s1.getObjeto().toString().charAt(0))%(int)s2.getObjeto()));
+						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("CARACTER")){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((int)s1.getObjeto())%((int)s1.getObjeto().toString().charAt(0))));
+						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("ENTERO")){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, (((int)s2.getObjeto())%(int)s2.getObjeto()));
+						}else if((s1.getTipo().equals("ENTERO") && s2.getTipo().equals("DOBLE")) || (s1.getTipo().equals("DOBLE") && s2.getTipo().equals("ENTERO"))){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((double)s2.getObjeto())%(double)s2.getObjeto()));
+						}else{
+							parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"%\"", oright+1, oleft+1);
+						}
+					}
+				}
+				RESULT = sr;
+	:}
+	|valor_operacion:r1 POTENCIA:o valor_operacion:r2 {:
+				Simbolo s1 = r1;
+				Simbolo s2 = r2;
+				Simbolo sr = null;
+				if(reportar && (s1!=null && s2!=null)){
+					if((!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA"))){
+						parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"^\", no es posible realizar esta operacion entre cadenas", oright+1, oleft+1);
+					}else{
+						if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("ENTERO")){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) ((Math.pow((int)s1.getObjeto().toString().charAt(0),(int)s2.getObjeto()))));
+						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("CARACTER")){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (Math.pow((int)s1.getObjeto(),((int)s1.getObjeto().toString().charAt(0)))));
+						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("ENTERO")){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (Math.pow((int)s2.getObjeto(),(int)s2.getObjeto())));
+						}else if((s1.getTipo().equals("ENTERO") && s2.getTipo().equals("DOBLE")) || (s1.getTipo().equals("DOBLE") && s2.getTipo().equals("ENTERO"))){
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (Math.pow((double)s2.getObjeto(),(double)s2.getObjeto())));
+						}else{
+							parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"^\"", oright+1, oleft+1);
+						}
+					}
+				}
+				RESULT = sr;
+	:}
 	|PA_A valor_operacion:r PA_C {:RESULT = r;:}
 	|valor:r  {:RESULT = r;:};
 
@@ -368,12 +566,12 @@ struct_asig_arreglo ::=
 /*------------------------------------------------------------------------------STRUCUTRA DE UNA FUNCION*/
 
 struct_funcion ::=	 
-	 tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C st_ind code_funcion st_ded
-	|KEEP tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C st_ind code_funcion st_ded;
+	 tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C {:reportar = false;:} st_ind code_funcion st_ded {:reportar = true;:}
+	|KEEP tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C {:reportar = false;:} st_ind code_funcion st_ded {:reportar = true;:};
 
 struct_procedimiento ::= 
-	 IDENTIFICADOR PA_A struct_parametros PA_C st_ind code_metodo st_ded
-	|KEEP IDENTIFICADOR PA_A struct_parametros PA_C st_ind code_metodo st_ded;
+	 IDENTIFICADOR PA_A struct_parametros PA_C {:reportar = false;:} st_ind code_metodo st_ded  {:reportar = true;:}
+	|KEEP IDENTIFICADOR PA_A struct_parametros PA_C {:reportar = false;:} st_ind code_metodo st_ded {:reportar = true;:};
 
 
 struct_parametros ::=

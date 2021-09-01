@@ -25,6 +25,13 @@ public class Main {
      */
     public static void main(String[] args) {
         
+        String dd = "'0'";
+        String ds = dd.substring(1, dd.length()-1);
+        System.out.println("ds: "+ds);
+        char c = 48;
+        int r = ds.charAt(0);
+        System.out.println("char: "+c);
+        
 //        String myStr = "\t\tHello planet earth, you are a great planet.";
 //        System.out.println(myStr.lastIndexOf("\t"));
 //        String myStr1 = "\t\t";

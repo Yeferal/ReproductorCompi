@@ -1,0 +1,1 @@
+backend.analizador.comprobaciones.tablaSimbolos.AnalizadorLexicoTS

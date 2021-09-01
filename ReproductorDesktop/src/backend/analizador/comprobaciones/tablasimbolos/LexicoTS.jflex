@@ -242,8 +242,8 @@ TabsS                = ("    ")+
     ({Numero})                              {return new Symbol(SimbolosTS.NUMERO , yycolumn, yyline, new Integer(yytext()));}
     ({Numero}("\."){Numero})                {return new Symbol(SimbolosTS.DECIMAL , yycolumn, yyline, new Double(yytext()));}
     ({Cadena})                              {return new Symbol(SimbolosTS.CADENA , yycolumn, yyline, yytext());}
-    ("'"("#'"|"##"|"#r"|"#t"|"#n")"'")      {return new Symbol(SimbolosTS.CARACTER , yycolumn, yyline, yytext());}
-    ("'"({Letra}|{Signo}|{Digito})"'")      {return new Symbol(SimbolosTS.CARACTER , yycolumn, yyline, yytext());}
+    ("'"("#'"|"##"|"#r"|"#t"|"#n")"'")      {return new Symbol(SimbolosTS.CARACTER , yycolumn, yyline, yytext().substring(1, yytext().length()-1));}
+    ("'"({Letra}|{Signo}|{Digito})"'")      {return new Symbol(SimbolosTS.CARACTER , yycolumn, yyline, yytext().substring(1, yytext().length()-1));}
 
 
     {Espacio}                               {/*Ignore*/}

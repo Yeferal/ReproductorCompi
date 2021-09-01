@@ -7,3 +7,5 @@ Lista de cosas por Hacer
     - analizar los return
     - analizar la unicidad
     - analizar el switch
+
+====================================================================================

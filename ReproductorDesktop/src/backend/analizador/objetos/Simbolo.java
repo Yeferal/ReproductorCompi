@@ -31,6 +31,9 @@ public class Simbolo {
     private ArrayList<String> tipoParams;
     private Object objeto;
     private boolean isKeep, isArreglo = false;
+    String dd = "'a'";
+    String ds = dd.substring(0, dd.length()-1);
+    char c = dd.charAt(ambito);
 //    private Nodo raiz;
     
     public Simbolo(String nombre, int ambito) {
@@ -52,6 +55,14 @@ public class Simbolo {
     }
 
     public Simbolo(String nombre, String tipo, int ambito, Object objeto, boolean isKeep) {
+        this.nombre = nombre;
+        this.tipo = tipo;
+        this.ambito = ambito;
+        this.objeto = objeto;
+        this.isKeep = isKeep;
+    }
+
+    public Simbolo(String nombre, String tipo, int ambito, Object objeto) {
         this.nombre = nombre;
         this.tipo = tipo;
         this.ambito = ambito;
