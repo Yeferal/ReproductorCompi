@@ -15,11 +15,29 @@ public class Arreglo {
     private String tipoArreglo;
     private int tamanio;
     private ArrayList<Integer> dimArreglo;
-
+    
     public Arreglo(ArrayList<Integer> dimArreglo) {
         this.dimArreglo = dimArreglo;
+        tamanio = 0;
+    }
+
+    public Arreglo(String tipoArreglo) {
+        this.tipoArreglo = tipoArreglo;
+    }
+
+    public Arreglo(String tipoArreglo, ArrayList<Integer> dimArreglo) {
+        this.tipoArreglo = tipoArreglo;
+        this.dimArreglo = dimArreglo;
+        generarTmArreglo();
     }
     
+    public void generarTmArreglo(){
+        if(dimArreglo!=null){
+            tamanio = getTotalPosiciones(dimArreglo);
+            arreglo = new Object[tamanio];
+        }
+        
+    }
     
     
     public int getTotalPosiciones(ArrayList<Integer> dimension){
@@ -97,5 +115,17 @@ public class Arreglo {
             total = total = dimension.get(pos);
         }
         return total;
+    }
+    
+    public boolean llenarArreglo(ArrayList<Object> listado){
+        for (int i = 0; i < arreglo.length; i++) {
+            Simbolo s = (Simbolo)listado.get(i);
+            if(tipoArreglo.equals(s.getTipo())){
+                arreglo[i] = s.getObjeto();
+            }else{
+                return false;
+            }
+        }
+        return true;
     }
 }

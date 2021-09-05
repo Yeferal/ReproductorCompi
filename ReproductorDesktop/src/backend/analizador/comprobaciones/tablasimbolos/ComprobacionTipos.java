@@ -1,6 +1,8 @@
 
 package backend.analizador.comprobaciones.tablasimbolos;
 
+import backend.analizador.objetos.Simbolo;
+
 public class ComprobacionTipos {
         
     /*
@@ -166,5 +168,145 @@ public class ComprobacionTipos {
         }
         return charS;
     }
+    
+    public boolean opRacionalIgualIgual(Simbolo s1, Simbolo s2){
+        boolean resultado = false;
+        if(s1.getTipo().equals(s2.getTipo())){
+            return (s1.getObjeto().equals(s2.getObjeto()));
+        }else if((s1.getTipo().equals("ENTERO") && s1.getTipo().equals("CARACTER")) && s1.getObjeto().equals(s2.getObjeto())){
+            return s1.getObjeto().equals((int)(s2.getObjeto().toString().charAt(0)));
+        }else if((s1.getTipo().equals("CARACTER") && s1.getTipo().equals("ENTERO")) && s1.getObjeto().equals(s2.getObjeto())){
+            return s2.getObjeto().equals((int)(s1.getObjeto().toString().charAt(0)));
+        }else if((s1.getTipo().equals("ENTERO") && s1.getTipo().equals("DOBLE")) && s1.getObjeto().equals(s2.getObjeto())){
+            return s1.getObjeto().equals((int)((double)s2.getObjeto()));
+        }else if((s1.getTipo().equals("DOBLE") && s1.getTipo().equals("ENTERO")) && s1.getObjeto().equals(s2.getObjeto())){
+            return s2.getObjeto().equals((int)((double)s1.getObjeto()));
+        }
+        return resultado;
+    }
+    
+    public boolean opRacionalDiferente(Simbolo s1, Simbolo s2){
+        boolean resultado = true;
+        if(s1.getTipo().equals(s2.getTipo())){
+            return !(s1.getObjeto().equals(s2.getObjeto()));
+        }else if((s1.getTipo().equals("ENTERO") && s1.getTipo().equals("CARACTER")) && s1.getObjeto().equals(s2.getObjeto())){
+            return !(s1.getObjeto().equals((int)(s2.getObjeto().toString().charAt(0))));
+        }else if((s1.getTipo().equals("CARACTER") && s1.getTipo().equals("ENTERO")) && s1.getObjeto().equals(s2.getObjeto())){
+            return !(s2.getObjeto().equals((int)(s1.getObjeto().toString().charAt(0))));
+        }else if((s1.getTipo().equals("ENTERO") && s1.getTipo().equals("DOBLE")) && s1.getObjeto().equals(s2.getObjeto())){
+            return !(s1.getObjeto().equals((int)((double)s2.getObjeto())));
+        }else if((s1.getTipo().equals("DOBLE") && s1.getTipo().equals("ENTERO")) && s1.getObjeto().equals(s2.getObjeto())){
+            return !(s2.getObjeto().equals((int)((double)s1.getObjeto())));
+        }
+        return resultado;
+    }
+    
+    public boolean opRacionalMenorQ(Simbolo s1, Simbolo s2){
+        boolean resultado = false;
+        if(!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA")){
+            if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("CARACTER")){
+                return ((double)(s1.getObjeto().toString().charAt(0))<(double)(s2.getObjeto().toString().charAt(0)));
+            }else if(s1.getTipo().equals("CARACTER")){
+                return ((double)(s1.getObjeto().toString().charAt(0))<(double)(s2.getObjeto()));
+            }else if(s2.getTipo().equals("CARACTER")){
+                return ((double)(s1.getObjeto())<(double)(s2.getObjeto().toString().charAt(0)));
+            }else{
+                return ((double)(s1.getObjeto())<(double)(s1.getObjeto()));
+            }
+        }
+        return resultado;
+    }
+    
+    public boolean opRacionalMayorQ(Simbolo s1, Simbolo s2){
+        boolean resultado = false;
+        if(!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA")){
+            if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("CARACTER")){
+                return ((double)(s1.getObjeto().toString().charAt(0))>(double)(s2.getObjeto().toString().charAt(0)));
+            }else if(s1.getTipo().equals("CARACTER")){
+                return ((double)(s1.getObjeto().toString().charAt(0))>(double)(s2.getObjeto()));
+            }else if(s2.getTipo().equals("CARACTER")){
+                return ((double)(s1.getObjeto())>(double)(s2.getObjeto().toString().charAt(0)));
+            }else{
+                return ((double)(s1.getObjeto())>(double)(s1.getObjeto()));
+            }
+        }
+        return resultado;
+    }
+    
+    public boolean opRacionalMenorQIgual(Simbolo s1, Simbolo s2){
+        boolean resultado = false;
+        if(!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA")){
+            if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("CARACTER")){
+                return ((double)(s1.getObjeto().toString().charAt(0))<=(double)(s2.getObjeto().toString().charAt(0)));
+            }else if(s1.getTipo().equals("CARACTER")){
+                return ((double)(s1.getObjeto().toString().charAt(0))<=(double)(s2.getObjeto()));
+            }else if(s2.getTipo().equals("CARACTER")){
+                return ((double)(s1.getObjeto())<=(double)(s2.getObjeto().toString().charAt(0)));
+            }else{
+                return ((double)(s1.getObjeto())<=(double)(s1.getObjeto()));
+            }
+        }
+        return resultado;
+    }
+    
+    public boolean opRacionalMayorQIgual(Simbolo s1, Simbolo s2){
+        boolean resultado = false;
+        if(!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA")){
+            if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("CARACTER")){
+                return ((double)(s1.getObjeto().toString().charAt(0))>=(double)(s2.getObjeto().toString().charAt(0)));
+            }else if(s1.getTipo().equals("CARACTER")){
+                return ((double)(s1.getObjeto().toString().charAt(0))>=(double)(s2.getObjeto()));
+            }else if(s2.getTipo().equals("CARACTER")){
+                return ((double)(s1.getObjeto())>=(double)(s2.getObjeto().toString().charAt(0)));
+            }else{
+                return ((double)(s1.getObjeto())>=(double)(s1.getObjeto()));
+            }
+        }
+        return resultado;
+    }
+    
+    public boolean opLogicoOR(Simbolo s1, Simbolo s2){
+        if(s1.getTipo().equals("BOOLEAN") && s2.getTipo().equals("BOOLEAN")){
+            return ((boolean)s1.getObjeto() || (boolean)s2.getObjeto());
+        }
+        return false;
+    }
+    public boolean opLogicoNOR(Simbolo s1, Simbolo s2){
+        if(s1.getTipo().equals("BOOLEAN") && s2.getTipo().equals("BOOLEAN")){
+            return !((boolean)s1.getObjeto() || (boolean)s2.getObjeto());
+        }
+        return !false;
+    }
+    public boolean opLogicoXOR(Simbolo s1, Simbolo s2){
+        if(s1.getTipo().equals("BOOLEAN") && s2.getTipo().equals("BOOLEAN")){
+            return (((boolean)s1.getObjeto() && !(boolean)s2.getObjeto()) || (!(boolean)s1.getObjeto() && (boolean)s2.getObjeto()));
+        }
+        return false;
+    }
+    public boolean opLogicoAND(Simbolo s1, Simbolo s2){
+        if(s1.getTipo().equals("BOOLEAN") && s2.getTipo().equals("BOOLEAN")){
+            return ((boolean)s1.getObjeto() && (boolean)s2.getObjeto());
+        }
+        return false;
+    }
+    public boolean opLogicoNAND(Simbolo s1, Simbolo s2){
+        if(s1.getTipo().equals("BOOLEAN") && s2.getTipo().equals("BOOLEAN")){
+            return !((boolean)s1.getObjeto() && (boolean)s2.getObjeto());
+        }
+        return !false;
+    }
+    public boolean opLogicoNOT(Simbolo s1){
+        if(s1.getTipo().equals("BOOLEAN")){
+            return !((boolean)s1.getObjeto());
+        }
+        return !false;
+    }
+//    public boolean opLogicoAND(Simbolo s1, Simbolo s2){
+//        if(s1.getTipo().equals("BOOLEAN") && s2.getTipo().equals("BOOLEAN")){
+//            return ((boolean)s1.getObjeto() && (boolean)s2.getObjeto());
+//        }
+//        return false;
+//    }
+    
     
 }

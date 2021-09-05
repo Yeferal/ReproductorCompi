@@ -106,7 +106,8 @@ non terminal String notas, tipo_orden, struct_operador_relacional;
 non terminal String tipo_valor_op_logico, mensajes;
 non terminal String st_ind, st_ded, st_final, code_funcion, code_metodo, caso_salir, state_continuar, struct_caso ;
 non terminal params_lleno, param_vacio, valores_array_mas_dim, especiales_q_retornan;
-non terminal state_op_logicos, state_op_racional;
+non terminal state_op_logicos, state_op_racional, st_iniciales;
+non terminal struct_declaracion_var_f, struct_declaracion_array_f;
 /*non terminal ;
 */
 
@@ -205,6 +206,23 @@ struct_declaracion_var ::=
             	parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo var", eright+1, eleft+1); 
     :};
 
+
+struct_declaracion_var_f ::=	 
+	 struct_declaracion_var_f COMA IDENTIFICADOR
+	|struct_declaracion_var_f COMA IDENTIFICADOR IGUAL struct_operador_logico
+	|VAR tipo_dato IDENTIFICADOR IGUAL struct_operador_logico
+	|VAR tipo_dato IDENTIFICADOR
+	|struct_declaracion_var_f COMA error:e struct_operador_logico {:
+				parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo ID o fallo en la declaracion", eright+1, eleft+1);
+               // System.out.println("Err: "+(eright+1)+", Col: "+(eleft+1)+", Token: "+e+", Descript: "+"Error de declaracion de variable");
+                //parser.listaErrores.add(new ErrorSintactico(eright+1,eleft+1,(String) e,"Error de declaracion de variable"));
+    :}
+    |error:e tipo_dato IDENTIFICADOR IGUAL struct_operador_logico {:
+				parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo var", eright+1, eleft+1);
+    :}
+    |error:e tipo_dato IDENTIFICADOR {:
+            	parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo var", eright+1, eleft+1); 
+    :};
 /*------------------------------------------------------------------------------ESTADO KEEP*/
 
 keep_state ::=   KEEP 
@@ -317,6 +335,8 @@ struct_operador_relacional ::=
 	|valor_operacion MAYOR_IGUAL valor_operacion
 	|valor_operacion MENOR_IGUAL valor_operacion
 	|IS_NULL valor_operacion
+	|IS_NULL struct_operador_relacional
+	|PA_A struct_operador_relacional PA_C
 	|state_op_racional error:e {:
                 parser.agregarError("Sintactico",(String)e,"Error en la estrucutra racional se esperaba un valor para comparar", eright+1, eleft+1);
     :}
@@ -379,6 +399,19 @@ struct_declaracion_array ::=
 	|error:e tipo_dato ARREGLO IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C {:parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo ID o fallo en la declaracion", eright+1, eleft+1);:}
 	|error:e tipo_dato ARREGLO IDENTIFICADOR {:parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo ID o fallo en la declaracion", eright+1, eleft+1);:}
 	|error:e tipo_dato ARREGLO IDENTIFICADOR dim_arreglo  {:parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo ID o fallo en la declaracion", eright+1, eleft+1);:};
+
+
+struct_declaracion_array_f ::= 
+	 struct_declaracion_array_f COMA IDENTIFICADOR dim_arreglo
+	|struct_declaracion_array_f COMA IDENTIFICADOR
+	|struct_declaracion_array_f COMA IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
+	|VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
+	|VAR tipo_dato ARREGLO IDENTIFICADOR
+	|VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo
+	|error:e tipo_dato ARREGLO IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C {:parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo ID o fallo en la declaracion", eright+1, eleft+1);:}
+	|error:e tipo_dato ARREGLO IDENTIFICADOR {:parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo ID o fallo en la declaracion", eright+1, eleft+1);:}
+	|error:e tipo_dato ARREGLO IDENTIFICADOR dim_arreglo  {:parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo ID o fallo en la declaracion", eright+1, eleft+1);:};
+
 
 /*------------------------------------------------------------------------------TAMANIO ARREGLO*/
 
@@ -504,9 +537,9 @@ params_lleno ::=
 param_vacio ::= ;
 
 code_funcion ::=
-	 struct_declaracion_var code_funcion
+	 struct_declaracion_var_f code_funcion
 	|struc_asig_var code_funcion
-	|struct_declaracion_array  code_funcion
+	|struct_declaracion_array_f code_funcion
 	|struct_asig_arreglo code_funcion
 	|strunt_llamada_funcion code_funcion
 	|struct_si code_funcion
@@ -525,9 +558,9 @@ code_funcion ::=
 	|;
 
 code_metodo ::=
-	 struct_declaracion_var code_metodo
+	 struct_declaracion_var_f code_metodo
 	|struc_asig_var code_metodo
-	|struct_declaracion_array  code_metodo
+	|struct_declaracion_array_f  code_metodo
 	|struct_asig_arreglo code_metodo
 	|strunt_llamada_funcion code_metodo
 	|struct_si code_metodo

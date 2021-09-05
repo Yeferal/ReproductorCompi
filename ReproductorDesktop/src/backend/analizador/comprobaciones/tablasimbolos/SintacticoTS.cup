@@ -48,6 +48,7 @@ action code
 	public TablaSimbolos tablaSimbolos = new TablaSimbolos();
     public ManejadorTablaSimbolos manejadorTablaSimbolos = new ManejadorTablaSimbolos(tablaSimbolos);
 	public ComprobacionTipos comprobacionTipos = new ComprobacionTipos();
+	public ManejadorArreglos manejadorArreglos = new ManejadorArreglos();
 	boolean reportar = true;
 :}
 
@@ -97,13 +98,14 @@ non terminal  struct_hacer, struct_funcion, struct_procedimiento, struct_reprodu
 non terminal  struct_esperar, struct_ordenar, struct_sumarizar, struct_longitud;
 non terminal  struct_mensaje, struct_principal;
 non terminal  strunt_llamada_funcion, struct_llamada_arreglo;
-non terminal ArrayList<String> parametros, state_params;
+non terminal ArrayList<Simbolo> parametros, state_params;
 non terminal  para_asig_var, condicion_para, incremento_para, struct_parametros;
 non terminal  notas, tipo_orden, struct_operador_relacional;
 non terminal  tipo_valor_op_logico, mensajes;
 non terminal  st_ind, st_ded, st_final, code_funcion, code_metodo, caso_salir, state_continuar, struct_caso ;
 non terminal params_lleno, param_vacio, valores_array_mas_dim, especiales_q_retornan;
 non terminal state_op_logicos, state_op_racional;
+non terminal struct_declaracion_var_f, struct_declaracion_array_f;
 /*non terminal ;
 */
 
@@ -190,11 +192,14 @@ struct_declaracion_var ::=
 	 struct_declaracion_var:ss COMA IDENTIFICADOR:a {:
 				Simbolo sAux =(Simbolo) ss;
 				Simbolo s = new Simbolo(a,sAux.getTipo(),manejadorTablaSimbolos.ambitoFlag,sAux.isIsKeep());
-				if(manejadorTablaSimbolos.isExistSimbolo(s)){
-					manejadorTablaSimbolos.agregarSimbolo(s);
-				}else{
-					parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+				if(reportar){
+					if(manejadorTablaSimbolos.isExistSimbolo(s)){
+						manejadorTablaSimbolos.agregarSimbolo(s);
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
 				}
+				
 				RESULT = s;
 	:}
 	|struct_declaracion_var:r COMA IDENTIFICADOR:a IGUAL struct_operador_logico:vr {:
@@ -237,13 +242,21 @@ struct_declaracion_var ::=
 	:}
 	|keep_state:k VAR tipo_dato:t IDENTIFICADOR:a {:
 				Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,k);
-				if(manejadorTablaSimbolos.isExistSimbolo(s)){
-					manejadorTablaSimbolos.agregarSimbolo(s);
-				}else{
-					parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+				if(reportar){
+					if(manejadorTablaSimbolos.isExistSimbolo(s)){
+						manejadorTablaSimbolos.agregarSimbolo(s);
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
 				}
 				RESULT = s;
 	:};
+
+struct_declaracion_var_f ::=	 
+	 struct_declaracion_var_f COMA IDENTIFICADOR
+	|struct_declaracion_var_f COMA IDENTIFICADOR IGUAL struct_operador_logico
+	|VAR tipo_dato IDENTIFICADOR IGUAL struct_operador_logico
+	|VAR tipo_dato IDENTIFICADOR;
 
 /*------------------------------------------------------------------------------ESTADO KEEP*/
 
@@ -309,18 +322,18 @@ strunt_llamada_funcion ::=
 
 parametros ::= 
 	 parametros:ar COMA valor_operacion:r {:
-				ArrayList<String> params = ar;
+				ArrayList<Simbolo> params = ar;
 				if(r!=null){
 					Simbolo s = (Simbolo)r;
-					params.add(s.getTipo());
+					params.add(s);
 				}
 				RESULT = params;
 	:}
     |valor_operacion:r {:
-				ArrayList<String> params = new ArrayList<>();
+				ArrayList<Simbolo> params = new ArrayList<>();
 				if(r!=null){
 					Simbolo s = (Simbolo)r;
-					params.add(s.getTipo());
+					params.add(s);
 				}
 				
 				RESULT = params;
@@ -328,7 +341,7 @@ parametros ::=
 
 state_params ::= 
 	 parametros:r {:RESULT = r;:}
-    | {:ArrayList<String> params = new ArrayList<>();:};
+    | {:ArrayList<Simbolo> params = new ArrayList<>();:};
 
 struct_llamada_arreglo ::= 
 	 IDENTIFICADOR dim_arreglo;
@@ -346,25 +359,201 @@ tipo_dato ::=
 /*------------------------------------------------------------------------------ESTRUCTURA LOGICA*/
 
 struct_operador_logico ::=	 
-	 struct_operador_logico OR struct_operador_logico {::}
-	|struct_operador_logico NOR struct_operador_logico {::}
-	|struct_operador_logico XOR struct_operador_logico {::}
-	|struct_operador_logico AND struct_operador_logico {::}
-	|struct_operador_logico NAND struct_operador_logico {::}
-	|NOT PA_A struct_operador_logico PA_C {::}
+	 struct_operador_logico:r1 OR:o struct_operador_logico:r2 {:
+				Simbolo s1 = r1;
+				Simbolo s2 = r2;
+				Simbolo sr = null;
+				if(reportar && (s1!=null && s2!=null)){
+					if((s1.getTipo().equals("BOOLEAN") || s2.getTipo().equals("BOOLEAN"))){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opLogicoOR(s1,s2));
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion logica entre \"||\", las operaciones no son racionales, o no son booleanos", oright+1, oleft+1);
+					}
+				} 
+				RESULT = sr;
+	:}
+	|struct_operador_logico:r1 NOR:o struct_operador_logico:r2 {:
+				Simbolo s1 = r1;
+				Simbolo s2 = r2;
+				Simbolo sr = null;
+				if(reportar && (s1!=null && s2!=null)){
+					if((s1.getTipo().equals("BOOLEAN") || s2.getTipo().equals("BOOLEAN"))){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opLogicoNOR(s1,s2));
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion logica entre \"!||\", las operaciones no son racionales, o no son booleanos", oright+1, oleft+1);
+					}
+				} 
+				RESULT = sr;
+	:}
+	|struct_operador_logico:r1 XOR:o struct_operador_logico:r2 {:
+				Simbolo s1 = r1;
+				Simbolo s2 = r2;
+				Simbolo sr = null;
+				if(reportar && (s1!=null && s2!=null)){
+					if((s1.getTipo().equals("BOOLEAN") || s2.getTipo().equals("BOOLEAN"))){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opLogicoXOR(s1,s2));
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion logica entre \"&|\", las operaciones no son racionales, o no son booleanos", oright+1, oleft+1);
+					}
+				} 
+				RESULT = sr;
+	:}
+	|struct_operador_logico:r1 AND:o struct_operador_logico:r2 {:
+				Simbolo s1 = r1;
+				Simbolo s2 = r2;
+				Simbolo sr = null;
+				if(reportar && (s1!=null && s2!=null)){
+					if((s1.getTipo().equals("BOOLEAN") || s2.getTipo().equals("BOOLEAN"))){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opLogicoAND(s1,s2));
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion logica entre \"&&\", las operaciones no son racionales, o no son booleanos", oright+1, oleft+1);
+					}
+				} 
+				RESULT = sr;
+	:}
+	|struct_operador_logico:r1 NAND:o struct_operador_logico:r2 {:
+				Simbolo s1 = r1;
+				Simbolo s2 = r2;
+				Simbolo sr = null;
+				if(reportar && (s1!=null && s2!=null)){
+					if((s1.getTipo().equals("BOOLEAN") || s2.getTipo().equals("BOOLEAN"))){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opLogicoNAND(s1,s2));
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion logica entre \"!&&\", las operaciones no son racionales, o no son booleanos", oright+1, oleft+1);
+					}
+				} 
+				RESULT = sr;
+	:}
+	|NOT:o PA_A struct_operador_logico:r1 PA_C {:
+				Simbolo s1 = r1;
+				Simbolo sr = null;
+				if(reportar && (s1!=null)){
+					if((s1.getTipo().equals("BOOLEAN"))){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opLogicoNOT(s1));
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion logica \"!\", las operacion no es racional, o no es booleana", oright+3, oleft+3);
+					}
+				} 
+				RESULT = sr;
+	:}
 	|struct_operador_relacional:r {:RESULT = (Simbolo) r;:}
-	|valor_operacion:r {:RESULT = r;:} ;
+	|valor_operacion:r {:RESULT = (Simbolo) r;:} ;
 
 state_op_logicos::= OR | NOR | XOR | AND | NAND;
 
 struct_operador_relacional ::=	 
-	 valor_operacion IGUAL_IGUAL valor_operacion {::}
-	|valor_operacion DIFERENTE valor_operacion {::}
-	|valor_operacion MAYOR_Q valor_operacion {::}
-	|valor_operacion MENOR_Q valor_operacion {::}
-	|valor_operacion MAYOR_IGUAL valor_operacion {::}
-	|valor_operacion MENOR_IGUAL valor_operacion {::}
-	|IS_NULL valor_operacion {::};
+	 valor_operacion:v1 IGUAL_IGUAL:o valor_operacion:v2 {:
+				Simbolo s1 = (Simbolo) v1;
+				Simbolo s2 = (Simbolo) v2;
+				Simbolo sr = null;
+				if(reportar && s1!=null && s2!=null){
+					if(s1.getTipo().equals(s2.getTipo())){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalIgualIgual(s1,s2));
+					}else if (s1.getTipo().equals("CARACTER") && s1.getTipo().equals("ENTERO")){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalIgualIgual(s1,s2));
+					}else if(s1.getTipo().equals("ENTERO") && s1.getTipo().equals("CARACTER")){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalIgualIgual(s1,s2));
+					}else if (s1.getTipo().equals("DOBLE") && s1.getTipo().equals("ENTERO")){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalIgualIgual(s1,s2));
+					}else if(s1.getTipo().equals("ENTERO") && s1.getTipo().equals("DOBLE")){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalIgualIgual(s1,s2));
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion racional entre \"==\", estos tipos de datos no puedens ser comparados", oright+1, oleft+1);
+					}
+				}
+	:}
+	|valor_operacion:v1 DIFERENTE:o valor_operacion:v2 {:
+				Simbolo s1 = (Simbolo) v1;
+				Simbolo s2 = (Simbolo) v2;
+				Simbolo sr = null;
+				if(reportar && s1!=null && s2!=null){
+					if(s1.getTipo().equals(s2.getTipo())){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalDiferente(s1,s2));
+					}else if (s1.getTipo().equals("CARACTER") && s1.getTipo().equals("ENTERO")){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalDiferente(s1,s2));
+					}else if(s1.getTipo().equals("ENTERO") && s1.getTipo().equals("CARACTER")){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalDiferente(s1,s2));
+					}else if (s1.getTipo().equals("DOBLE") && s1.getTipo().equals("ENTERO")){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalDiferente(s1,s2));
+					}else if(s1.getTipo().equals("ENTERO") && s1.getTipo().equals("DOBLE")){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalDiferente(s1,s2));
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion racional entre \"!=\", estos tipos de datos no puedens ser comparados", oright+1, oleft+1);
+					}
+				}
+	:}
+	|valor_operacion:v1 MAYOR_Q:o valor_operacion:v2 {:
+				Simbolo s1 = (Simbolo) v1;
+				Simbolo s2 = (Simbolo) v2;
+				Simbolo sr = null;
+				if(reportar && s1!=null && s2!=null){
+					if(!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA")){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalMayorQ(s1,s2));
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion racional entre \">\", es posible realizarlo entre cadenas", oright+1, oleft+1);
+					}
+				}
+	:}
+	|valor_operacion:v1 MENOR_Q:o valor_operacion:v2 {:
+				Simbolo s1 = (Simbolo) v1;
+				Simbolo s2 = (Simbolo) v2;
+				Simbolo sr = null;
+				if(reportar && s1!=null && s2!=null){
+					if(!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA")){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalMenorQ(s1,s2));
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion racional entre \"<\", es posible realizarlo entre cadenas", oright+1, oleft+1);
+					}
+				}
+				
+	:}
+	|valor_operacion:v1 MAYOR_IGUAL:o valor_operacion:v2 {:
+				Simbolo s1 = (Simbolo) v1;
+				Simbolo s2 = (Simbolo) v2;
+				Simbolo sr = null;
+				if(reportar && s1!=null && s2!=null){
+					if(!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA")){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalMayorQIgual(s1,s2));
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion racional entre \">=\", es posible realizarlo entre cadenas", oright+1, oleft+1);
+					}
+				}
+	:}
+	|valor_operacion:v1 MENOR_IGUAL:o valor_operacion:v2 {:
+				Simbolo s1 = (Simbolo) v1;
+				Simbolo s2 = (Simbolo) v2;
+				Simbolo sr = null;
+				if(reportar && s1!=null && s2!=null){
+					if(!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA")){
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalMenorQIgual(s1,s2));
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion racional entre \"<=\", es posible realizarlo entre cadenas", oright+1, oleft+1);
+					}
+				}
+	:}
+	|IS_NULL:o valor_operacion:v1 {:
+				Simbolo s1 = (Simbolo) v1;
+				if(reportar && s1!=null){
+					if(s1.getTipo().equals("BOOLEAN")){
+						s1.setObjeto(!((boolean)s1.getObjeto()));
+						RESULT = s1;
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion racional, no es un valor booleano", v1right+1, v1left+1);
+					}
+				}
+	:}
+	|IS_NULL:o struct_operador_relacional:v1 {:
+				Simbolo s1 = (Simbolo) v1;
+				if(reportar && s1!=null){
+					if(s1.getTipo().equals("BOOLEAN")){
+						s1.setObjeto(!((boolean)s1.getObjeto()));
+						RESULT = s1;
+					}else{
+						parser.agregarError("Semantico",(String) o,"Error en la operacion racional, no es un valor booleano", v1right+1, v1left+1);
+					}
+				}
+	:}
+	|PA_A struct_operador_relacional:r1 PA_C {: RESULT=r1; :};
 								
 state_op_racional ::==  IGUAL_IGUAL | DIFERENTE | MAYOR_Q | MENOR_Q | MAYOR_IGUAL | MENOR_IGUAL;
 
@@ -523,35 +712,202 @@ struc_asig_var ::=
 /*------------------------------------------------------------------------------Estructura arreglo*/
 
 struct_declaracion_array ::= 
-	 struct_declaracion_array COMA IDENTIFICADOR dim_arreglo
-	|struct_declaracion_array COMA IDENTIFICADOR
-	|struct_declaracion_array COMA IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
-	|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
-	|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR
-	|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo;
+	 struct_declaracion_array:r COMA IDENTIFICADOR:a dim_arreglo:d {:
+				if(reportar && r!=null && d!=null){
+					ArrayList<Integer> dimens = (ArrayList<Integer>) d;
+					Simbolo sr = (Simbolo) r;
+					Simbolo s = new Simbolo(a,sr.getTipo(),manejadorTablaSimbolos.ambitoFlag,new Arreglo(sr.getTipo(),dimens),sr.isIsKeep(),true);
+					if(manejadorTablaSimbolos.isExistSimbolo(s)){
+						manejadorTablaSimbolos.agregarSimbolo(s);
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
+					RESULT = s;
+				}
+	:}
+	|struct_declaracion_array:r COMA IDENTIFICADOR:a {:
+				if(reportar && r!=null){
+					Simbolo sr = (Simbolo) r;
+					Simbolo s = new Simbolo(a,sr.getTipo(),manejadorTablaSimbolos.ambitoFlag,new Arreglo(sr.getTipo()),sr.isIsKeep(),true);
+					if(manejadorTablaSimbolos.isExistSimbolo(s)){
+						manejadorTablaSimbolos.agregarSimbolo(s);
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
+					RESULT = s;
+				}
+	:}
+	|struct_declaracion_array:r COMA IDENTIFICADOR:a dim_arreglo:d IGUAL LLAVE_A valor_arreglo:vs LLAVE_C {:
+				if(reportar && r!=null && d!=null && vs!=null){
+					ArrayList<Integer> dimens = (ArrayList<Integer>) d;
+					ArrayList<Object> lista = (ArrayList<Object>) vs;
+					Simbolo sr = (Simbolo) r;
+					Simbolo s = new Simbolo(a,sr.getTipo(),manejadorTablaSimbolos.ambitoFlag,new Arreglo(sr.getTipo(),dimens),sr.isIsKeep(),true);
+					if(manejadorTablaSimbolos.isExistSimbolo(s)){
+						if(manejadorArreglos.verificarDimArreglo(lista)){
+							if(manejadorArreglos.compararDims(dimens)){
+								Arreglo arrAux = (Arreglo) s.getObjeto();
+								arrAux.llenarArreglo(manejadorArreglos.listaObj);
+								s.setObjeto(arrAux);
+								manejadorTablaSimbolos.agregarSimbolo(s);
+							}else{
+								parser.agregarError("Semantico",a,"Error: no coinciden las dimensiones del arreglo \""+a+"\" con las dimensiones de los datos que se agregaron", dright+1, dleft+1);
+							}
+						}else{
+							parser.agregarError("Semantico",a,"Error: no coinciden las dimensiones de los valores del arreglo \""+a+"\" con los datos de se le ingresaron", vsright+1, vsleft+1);
+						}
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
+					RESULT = s;
+				}
+	:}
+	|keep_state:k VAR tipo_dato:t ARREGLO IDENTIFICADOR:a dim_arreglo:d IGUAL LLAVE_A valor_arreglo:vs LLAVE_C {:
+				if(reportar && d!=null && vs!=null){
+					ArrayList<Integer> dimens = (ArrayList<Integer>) d;
+					ArrayList<Object> lista = (ArrayList<Object>) vs;
+					Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,new Arreglo(t,dimens),k,true);
+					if(manejadorTablaSimbolos.isExistSimbolo(s)){
+						if(manejadorArreglos.verificarDimArreglo(lista)){
+							if(manejadorArreglos.compararDims(dimens)){
+								Arreglo arrAux = (Arreglo) s.getObjeto();
+								arrAux.llenarArreglo(manejadorArreglos.listaObj);
+								s.setObjeto(arrAux);
+								manejadorTablaSimbolos.agregarSimbolo(s);
+							}else{
+								parser.agregarError("Semantico",a,"Error: no coinciden las dimensiones del arreglo \""+a+"\" con las dimensiones de los datos que se agregaron", dright+1, dleft+1);
+							}
+						}else{
+							parser.agregarError("Semantico",a,"Error: no coinciden las dimensiones de los valores del arreglo \""+a+"\" con los datos de se le ingresaron", vsright+1, vsleft+1);
+						}
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
+					RESULT = s;
+				}
+	:}
+	|keep_state:k VAR tipo_dato:t ARREGLO IDENTIFICADOR:a {:
+				if(reportar){
+					//ArrayList<Integer> dimens = (ArrayList<Integer>) d;
+					Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,new Arreglo(t),k,true);
+					if(manejadorTablaSimbolos.isExistSimbolo(s)){
+						manejadorTablaSimbolos.agregarSimbolo(s);
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
+					RESULT = s;
+				}
+	:}
+	|keep_state:k VAR tipo_dato:t ARREGLO IDENTIFICADOR:a dim_arreglo:d {:
+				if(reportar && d!=null){
+					ArrayList<Integer> dimens = (ArrayList<Integer>) d;
+					Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,new Arreglo(t,dimens),k,true);
+					if(manejadorTablaSimbolos.isExistSimbolo(s)){
+						manejadorTablaSimbolos.agregarSimbolo(s);
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
+					RESULT = s;
+				}
+	:};
+
+struct_declaracion_array_f ::= 
+	 struct_declaracion_array_f COMA IDENTIFICADOR dim_arreglo
+	|struct_declaracion_array_f COMA IDENTIFICADOR
+	|struct_declaracion_array_f COMA IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
+	|VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
+	|VAR tipo_dato ARREGLO IDENTIFICADOR
+	|VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo;
 
 /*------------------------------------------------------------------------------TAMANIO ARREGLO*/
 
 dim_arreglo ::=	 
-	 dim_arreglo CORCHETE_A valor_operacion CORCHETE_C
-	|CORCHETE_A valor_operacion CORCHETE_C;
+	 dim_arreglo:r CORCHETE_A valor_operacion:v CORCHETE_C {:
+				ArrayList<Integer> lista = (ArrayList<Integer>) r;
+				if(reportar && v!=null){
+					Simbolo s = (Simbolo) v;
+					if(s.getTipo().equals("ENTERO") || s.getTipo().equals("DOBLE")){
+						lista.add((int)s.getObjeto());
+					}else{
+						parser.agregarError("Semantico","[<numeric>]","Error: el valor de la dimesion no es numerico", vright+1, vleft+1);
+					}
+				}
+				RESULT = lista;
+	:}
+	|CORCHETE_A valor_operacion:v CORCHETE_C {:
+				ArrayList<Integer> lista = new ArrayList<>();
+				if(reportar && v!=null){
+					Simbolo s = (Simbolo) v;
+					if(s.getTipo().equals("ENTERO") || s.getTipo().equals("DOBLE")){
+						lista.add((int)s.getObjeto());
+					}else{
+						parser.agregarError("Semantico","[<numeric>]","Error: el valor de la dimesion no es numerico", vright+1, vleft+1);
+					}
+				}
+				RESULT = lista;
+	:};
 
 
 /*------------------------------------------------------------------------------VALORES ARREGLO*/
 
 valor_arreglo ::=	
-	 valores_array_mas_dim 
-	|valores_array ;
+	 valores_array_mas_dim:r {:RESULT = r;:} 
+	|valores_array:r {:RESULT = r;:};
 
 valores_array_mas_dim ::= 
-	 LLAVE_A valores_array_mas_dim LLAVE_C
-	|valores_array_mas_dim COMA LLAVE_A valores_array_mas_dim LLAVE_C
-	|LLAVE_A valores_array LLAVE_C
-	|valores_array_mas_dim COMA LLAVE_A valores_array LLAVE_C;
+	 LLAVE_A valores_array_mas_dim:v LLAVE_C {:
+				ArrayList<Object> lista = new ArrayList<>();
+				if(reportar && v!=null){
+					ArrayList<Object> listaR = (ArrayList<Object>) v;
+					lista.add(listaR);
+				}
+				RESULT = lista;
+	:}
+	|valores_array_mas_dim:v1 COMA LLAVE_A valores_array_mas_dim:v2 LLAVE_C {:
+				ArrayList<Object> lista = (ArrayList<Object>) v1;
+				//ArrayList<Object> listaR = (ArrayList<Object>) v2;
+				if(reportar && v1!=null && v2!=null){
+					ArrayList<Object> listaR = (ArrayList<Object>) v2;
+					lista.add(listaR);
+				}
+				RESULT = lista;
+	:}
+	|LLAVE_A valores_array:v LLAVE_C {:
+				if(reportar && v!=null){
+					ArrayList<Object> lista = (ArrayList<Object>) v;
+					RESULT = lista;
+				}
+				
+	:}
+	|valores_array_mas_dim:v1 COMA LLAVE_A valores_array:v2 LLAVE_C {:
+				ArrayList<Object> lista = (ArrayList<Object>) v1;
+				//ArrayList<Object> listaR = (ArrayList<Object>) v2;
+				if(reportar && v1!=null && v2!=null){
+					ArrayList<Object> listaR = (ArrayList<Object>) v2;
+					lista.add(listaR);
+				}
+				RESULT = lista;
+	:};
 
 valores_array ::=  	 
-	 valores_array COMA tipo_valor_op_logico
-	|tipo_valor_op_logico;
+	 valores_array:r COMA tipo_valor_op_logico:v {:
+				ArrayList<Object> listaR = (ArrayList<Object>) r;
+				if(reportar && v!=null){
+					Simbolo s1 = (Simbolo) v;
+					// listaR.add(s1.getObjeto());
+					listaR.add(s1);
+				}
+				RESULT = listaR;
+	:}
+	|tipo_valor_op_logico:v {:
+				ArrayList<Object> lista = new ArrayList<>();
+				if(reportar && v!=null){
+					Simbolo s1 = (Simbolo) v;
+					// lista.add(s1.getObjeto());
+					lista.add(s1);
+				}
+				RESULT = lista;
+	:};
 
 // tipo_valor_op_logico ::= struct_operador_logico
 // 						|valor_operacion;
@@ -566,28 +922,86 @@ struct_asig_arreglo ::=
 /*------------------------------------------------------------------------------STRUCUTRA DE UNA FUNCION*/
 
 struct_funcion ::=	 
-	 tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C {:reportar = false;:} st_ind code_funcion st_ded {:reportar = true;:}
-	|KEEP tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C {:reportar = false;:} st_ind code_funcion st_ded {:reportar = true;:};
+	 tipo_dato:t IDENTIFICADOR:a PA_A struct_parametros:p PA_C {:
+	 			Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,(ArrayList<Simbolo>) p,false,true,false);
+				 s.generarParamsStrings();
+				if(reportar){
+					s.generarParamsStrings();
+					if(manejadorTablaSimbolos.isExistSimboloFM(s)){
+						manejadorTablaSimbolos.agregarSimbolo(s);
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un metodo o funcion con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
+				}
+				reportar = false;
+	:} st_ind code_funcion st_ded {:reportar = true;:}
+	|KEEP tipo_dato:t IDENTIFICADOR:a PA_A struct_parametros:p PA_C {:
+	 			Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,(ArrayList<Simbolo>) p,true,true,false);
+				 s.generarParamsStrings();
+				if(reportar){
+					s.generarParamsStrings();
+					if(manejadorTablaSimbolos.isExistSimboloFM(s)){
+						manejadorTablaSimbolos.agregarSimbolo(s);
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un metodo o funcion con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
+				}
+				reportar = false;
+	:} st_ind code_funcion st_ded {:reportar = true;:};
 
 struct_procedimiento ::= 
-	 IDENTIFICADOR PA_A struct_parametros PA_C {:reportar = false;:} st_ind code_metodo st_ded  {:reportar = true;:}
-	|KEEP IDENTIFICADOR PA_A struct_parametros PA_C {:reportar = false;:} st_ind code_metodo st_ded {:reportar = true;:};
+	 IDENTIFICADOR:a PA_A struct_parametros:p PA_C {:
+	 			Simbolo s = new Simbolo(a,"PROCEDIMIETO",manejadorTablaSimbolos.ambitoFlag,(ArrayList<Simbolo>) p,false,false,true);
+				s.generarParamsStrings();
+				if(reportar){
+					s.generarParamsStrings();
+					if(manejadorTablaSimbolos.isExistSimboloFM(s)){
+						manejadorTablaSimbolos.agregarSimbolo(s);
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un metodo o funcion con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
+				}
+				reportar = false;
+	:} st_ind code_metodo st_ded  {:reportar = true;:}
+	|KEEP IDENTIFICADOR:a PA_A struct_parametros:p PA_C {:
+	 			Simbolo s = new Simbolo(a,"PROCEDIMIETO",manejadorTablaSimbolos.ambitoFlag,(ArrayList<Simbolo>) p,true,false,true);
+				s.generarParamsStrings();
+				if(reportar){
+					s.generarParamsStrings();
+					if(manejadorTablaSimbolos.isExistSimboloFM(s)){
+						manejadorTablaSimbolos.agregarSimbolo(s);
+					}else{
+						parser.agregarError("Semantico",a,"Error: Ya existe un metodo o funcion con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+					}
+				}
+				reportar = false;
+	:} st_ind code_metodo st_ded {:reportar = true;:};
 
 
 struct_parametros ::=
-	params_lleno
-	|param_vacio;
+	 params_lleno:r {:RESULT = r;:}
+	|param_vacio:r  {:RESULT = r;:} ;
 
 params_lleno ::= 
-	 struct_parametros COMA tipo_dato IDENTIFICADOR
-	|tipo_dato IDENTIFICADOR;
+	 struct_parametros:r COMA tipo_dato:t IDENTIFICADOR:a {:
+				Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambito+1);
+				ArrayList<Simbolo> lista = (ArrayList<Simbolo>)r;
+				lista.add(s);
+				RESULT = lista;
+	:}
+	|tipo_dato:t IDENTIFICADOR:a {:
+				Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambito+1);
+				ArrayList<Simbolo> lista = new ArrayList<>();
+				lista.add(s);
+				RESULT = lista;
+	:} ;
 
-param_vacio ::= ;
+param_vacio ::= {:ArrayList<Simbolo> lista = new ArrayList<>(); RESULT = lista;:};
 
 code_funcion ::=
-	 struct_declaracion_var code_funcion
+	 struct_declaracion_var_f code_funcion
 	|struc_asig_var code_funcion
-	|struct_declaracion_array  code_funcion
+	|struct_declaracion_array_f  code_funcion
 	|struct_asig_arreglo code_funcion
 	|strunt_llamada_funcion code_funcion
 	|struct_si code_funcion
@@ -606,9 +1020,9 @@ code_funcion ::=
 	|;
 
 code_metodo ::=
-	 struct_declaracion_var code_metodo
+	 struct_declaracion_var_f code_metodo
 	|struc_asig_var code_metodo
-	|struct_declaracion_array  code_metodo
+	|struct_declaracion_array_f  code_metodo
 	|struct_asig_arreglo code_metodo
 	|strunt_llamada_funcion code_metodo
 	|struct_si code_metodo

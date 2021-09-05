@@ -29,11 +29,9 @@ public class Simbolo {
     private String nombre, tipo;
     private int ambito, numParams, tipoReturn;
     private ArrayList<String> tipoParams;
+    private ArrayList<Simbolo> simbParams;
     private Object objeto;
-    private boolean isKeep, isArreglo = false;
-    String dd = "'a'";
-    String ds = dd.substring(0, dd.length()-1);
-    char c = dd.charAt(ambito);
+    private boolean isKeep, isArreglo = false, isFuncion=false, isMetodo=false;
 //    private Nodo raiz;
     
     public Simbolo(String nombre, int ambito) {
@@ -54,13 +52,16 @@ public class Simbolo {
         this.isKeep = isKeep;
     }
 
-    public Simbolo(String nombre, String tipo, int ambito, Object objeto, boolean isKeep) {
+    public Simbolo(String nombre, String tipo, int ambito, Object objeto, boolean isKeep, boolean isArreglo) {
         this.nombre = nombre;
         this.tipo = tipo;
         this.ambito = ambito;
         this.objeto = objeto;
         this.isKeep = isKeep;
+        this.isArreglo = isArreglo;
     }
+    
+    
 
     public Simbolo(String nombre, String tipo, int ambito, Object objeto) {
         this.nombre = nombre;
@@ -88,6 +89,26 @@ public class Simbolo {
         this.tipoParams = tipoParams;
         this.objeto = objeto;
         this.isKeep = isKeep;
+    }
+
+    public Simbolo(String nombre, String tipo, int ambito, ArrayList<Simbolo> simbParams, boolean isKeep, boolean isFuncion, boolean isMetodo) {
+        this.nombre = nombre;
+        this.tipo = tipo;
+        this.ambito = ambito;
+        this.simbParams = simbParams;
+        this.isKeep = isKeep;
+        this.isFuncion = isFuncion;
+        this.isMetodo = isMetodo;
+    }
+    
+    
+    public void generarParamsStrings(){
+        tipoParams = new ArrayList<>();
+        for (int i = 0; i < simbParams.size(); i++) {
+            if(simbParams.get(i)!=null){
+               tipoParams.add(simbParams.get(i).getTipo());
+            }
+        }
     }
     
     public String getNombre() {
@@ -161,8 +182,31 @@ public class Simbolo {
     public void setIsArreglo(boolean isArreglo) {
         this.isArreglo = isArreglo;
     }
+
+    public ArrayList<Simbolo> getSimbParams() {
+        return simbParams;
+    }
+
+    public void setSimbParams(ArrayList<Simbolo> simbParams) {
+        this.simbParams = simbParams;
+    }
+
+    public boolean isIsFuncion() {
+        return isFuncion;
+    }
+
+    public void setIsFuncion(boolean isFuncion) {
+        this.isFuncion = isFuncion;
+    }
+
+    public boolean isIsMetodo() {
+        return isMetodo;
+    }
+
+    public void setIsMetodo(boolean isMetodo) {
+        this.isMetodo = isMetodo;
+    }
     
     
-        
     
 }

@@ -107,6 +107,7 @@ non terminal String tipo_valor_op_logico, mensajes;
 non terminal String st_ind, st_ded, st_final, code_funcion, code_metodo, caso_salir, state_continuar, struct_caso ;
 non terminal params_lleno, param_vacio, valores_array_mas_dim, especiales_q_retornan;
 non terminal state_op_logicos, state_op_racional;
+non terminal struct_declaracion_var_f, struct_declaracion_array_f;
 /*non terminal ;
 */
 
@@ -187,6 +188,12 @@ struct_declaracion_var ::=
 	|struct_declaracion_var COMA IDENTIFICADOR IGUAL struct_operador_logico
 	|keep_state VAR tipo_dato IDENTIFICADOR IGUAL struct_operador_logico
 	|keep_state VAR tipo_dato IDENTIFICADOR;
+
+struct_declaracion_var_f ::=	 
+	 struct_declaracion_var_f COMA IDENTIFICADOR
+	|struct_declaracion_var_f COMA IDENTIFICADOR IGUAL struct_operador_logico
+	|VAR tipo_dato IDENTIFICADOR IGUAL struct_operador_logico
+	|VAR tipo_dato IDENTIFICADOR;
 
 /*------------------------------------------------------------------------------ESTADO KEEP*/
 
@@ -290,6 +297,13 @@ struct_declaracion_array ::=
 	|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR
 	|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo;
 
+struct_declaracion_array_f ::= 
+	 struct_declaracion_array_f COMA IDENTIFICADOR dim_arreglo
+	|struct_declaracion_array_f COMA IDENTIFICADOR
+	|struct_declaracion_array_f COMA IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
+	|VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
+	|VAR tipo_dato ARREGLO IDENTIFICADOR
+	|VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo;
 /*------------------------------------------------------------------------------TAMANIO ARREGLO*/
 
 dim_arreglo ::=	 
@@ -345,9 +359,9 @@ params_lleno ::=
 param_vacio ::= ;
 
 code_funcion ::=
-	 struct_declaracion_var code_funcion
+	 struct_declaracion_var_f code_funcion
 	|struc_asig_var code_funcion
-	|struct_declaracion_array  code_funcion
+	|struct_declaracion_array_f  code_funcion
 	|struct_asig_arreglo code_funcion
 	|strunt_llamada_funcion code_funcion
 	|struct_si code_funcion
@@ -366,9 +380,9 @@ code_funcion ::=
 	|;
 
 code_metodo ::=
-	 struct_declaracion_var code_metodo
+	 struct_declaracion_var_f code_metodo
 	|struc_asig_var code_metodo
-	|struct_declaracion_array  code_metodo
+	|struct_declaracion_array_f  code_metodo
 	|struct_asig_arreglo code_metodo
 	|strunt_llamada_funcion code_metodo
 	|struct_si code_metodo

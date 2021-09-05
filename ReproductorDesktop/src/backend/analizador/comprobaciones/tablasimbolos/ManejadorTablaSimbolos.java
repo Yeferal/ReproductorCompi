@@ -50,6 +50,7 @@ public class ManejadorTablaSimbolos {
                 ambitoFlag = 0;
         }
     }
+    
     /**busca si existe el simbolo en el mismo ambito, 
     esto cuado se agrega una variable
     **/
@@ -77,6 +78,27 @@ public class ManejadorTablaSimbolos {
             }
         }
         //agregarSimbolo(s);
+        return true;
+    }
+    
+    /**busca si existe una funcion o metodo con el mismo nombre, 
+    esto cuado se agrega una variable
+    **/
+    public boolean isExistSimboloFM(Simbolo s){
+        for (int i = 0; i < tablaSimbolos.getListaSimbolos().size(); i++) {
+            //busca que sea metodo o funcion
+            if(tablaSimbolos.getListaSimbolos().get(i).isIsFuncion() || tablaSimbolos.getListaSimbolos().get(i).isIsMetodo()){
+                //si encuenta un simbolo con el mismo nombre
+                if (tablaSimbolos.getListaSimbolos().get(i).getNombre().equals(s.getNombre())) {
+                    //si encuentra el simbolo con el mismo ambito
+                    if (tablaSimbolos.getListaSimbolos().get(i).getTipoParams()==s.getTipoParams()) {
+                        return false;
+                    }else{
+                        
+                    }
+                }
+            }
+        }
         return true;
     }
     
