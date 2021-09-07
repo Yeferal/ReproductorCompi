@@ -71,7 +71,12 @@ public abstract class Nodo {
     public abstract void realizarAccion();
     
     public abstract Posicion getPosicion();
+    
     public abstract void setPosicion(Posicion pos);
+    
+    public abstract int getAmbito();
+    
+    public abstract void setAmbito(int ambito);
     
 //    public abstract ();
     
