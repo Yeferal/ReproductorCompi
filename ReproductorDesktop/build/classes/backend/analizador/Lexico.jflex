@@ -7,9 +7,9 @@ import java.util.Stack;
 %%
 %{
 
-    public ArrayList<ErrorLexico> listaErrores = new ArrayList<>();
+    public ArrayList<ErrorLSS> listaErrores = new ArrayList<>();
 
-    private void agregarError(ErrorLexico errorL){
+    private void agregarError(ErrorLSS errorL){
         listaErrores.add(errorL);
     }
 
@@ -33,26 +33,28 @@ import java.util.Stack;
             int ambito = pilaAmbitos.peek();
             if((ambito+1)==size){
                 pilaAmbitos.push(ambito+1);
-                System.out.println("INDENT: "+(ambito+1));
+                System.out.println(value+"INDENT: "+(ambito+1));
                 return new Symbol(Simbolos.INDENT , yycolumn, yyline, yytext());
             }else if((ambito-1)==size){
                 pilaAmbitos.pop();
-                System.out.println("DEDENT: "+(ambito-1));
+                System.out.println(value+"DEDENT: "+(ambito-1));
                 return new Symbol(Simbolos.DEDENT , yycolumn, yyline, yytext());
             }else if(ambito==size){
                 //UN SALATO DE LINEA
-                System.out.println("SALTO DE LINEA: "+ambito);
+                System.out.println(value+"SALTO DE LINEA: "+ambito);
             }else{
-                //error de identacion
-                System.out.println("Error de identacion");
-                agregarError(new ErrorLexico(yyline + 1,yycolumn + 1, yytext(), "Error de Indentacion", "Sintactico"));
+                //ErrorLSS de identacion
+                System.out.println(value+"Error de indentacion");
+                agregarError(new ErrorLSS(yyline + 1,yycolumn + 1, yytext(), "Error de Indentacion", "Sintactico"));
             }
         }
         return null;
     }
 
     public Symbol symbol(int size){
+        System.out.println("\tTabs!: "+size);
         size = (size/4);
+        System.out.println("\tTabsS: "+size);
         if(!pilaAmbitos.isEmpty()){
             int ambito = pilaAmbitos.peek();
             if((ambito+1)==size){
@@ -67,9 +69,9 @@ import java.util.Stack;
                 //UN SALATO DE LINEA
                 System.out.println("SALTO DE LINEA: "+ambito);
             }else{
-                //error de identacion
+                //ErrorLSS de identacion
                 System.out.println("Error de identacion");
-                agregarError(new ErrorLexico(yyline + 1,yycolumn + 1, yytext(), "Error de Indentacion", "Sintactico"));
+                agregarError(new ErrorLSS(yyline + 1,yycolumn + 1, yytext(), "Error de Indentacion", "Sintactico"));
             }
         }
         return null;
@@ -121,7 +123,7 @@ LqSea               =  ({Signo}|{Letra}|{Numero}|{Cadena}|.)*
 Espacio             = [" "\r\b\n]+
 Blancos               = [" "\r\b\f""]
 Tabs                = [\t]+
-TabsS                = ("    ")+
+TabsS                = ("    "|\b\b\b\b)+
 %%
 
 <YYINITIAL> {
@@ -136,7 +138,7 @@ TabsS                = ("    ")+
 
     //IDENTACIONES
     ({Tabs})                                { Symbol sim = symbol(yytext(), yytext().length()); if(sim!=null){return sim;}else{/*IGNORAR*/}}
-    ({TabsS})                               { Symbol sim = symbol(yytext(), yytext().length()); if(sim!=null){return sim;}else{/*IGNORAR*/}}
+    ({TabsS}+)                               {/*System.out.println("TABESPACIOS: Linea: "+yyline+", col: "+yycolumn);*/ Symbol sim = symbol(yytext().length()); if(sim!=null){return sim;}else{/*IGNORAR*/}}
 
     //signos o simbolos reservados
     "("                                     {printConsole(yytext()+"\n"); return new Symbol(Simbolos.PA_A , yycolumn, yyline, yytext());}
@@ -253,7 +255,7 @@ TabsS                = ("    ")+
 
     {Espacio}                               {/*Ignore*/}
     .                           {//System.out.println("CUALQUIER_SIM: "+yytext()); 
-                                    //ErrorG e = new ErrorG(yyline+1, yycolumn+1,yytext(),"Lexico","Error Lexico token: " + yytext()+"   Linea: " + (yyline+1) + " ,    Columna: " + (yycolumn+1));
+                                    //ErrorG e = new ErrorG(yyline+1, yycolumn+1,yytext(),"Lexico","ErrorLSS Lexico token: " + yytext()+"   Linea: " + (yyline+1) + " ,    Columna: " + (yycolumn+1));
                                     //listaErrores.add(e);
                                     //return new Symbol(Simbolos.CUALQUIER_SIM , yycolumn, yyline, yytext());
                                             //printConsole("ERR: "+yytext()+"\n"); /*return new Symbol(Simbolos.OTROS , yycolumn, yyline, yytext());*/

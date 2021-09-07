@@ -6,11 +6,18 @@
 package frontend.gui.editor;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Toolkit;
 import javax.swing.JTextPane;
+import javax.swing.text.AttributeSet;
 import javax.swing.text.DefaultStyledDocument;
+import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
+import javax.swing.text.TabSet;
+import javax.swing.text.TabStop;
 
 /**
  *
@@ -27,7 +34,10 @@ public class Pintar {
         this.caja2=new JTextPane();
         this.sc = new StyleContext();
         this.doc = new DefaultStyledDocument(sc);
+        
+        
     }
+        
 
     public void insertar(String texto){
    

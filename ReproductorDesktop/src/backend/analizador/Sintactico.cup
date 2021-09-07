@@ -9,10 +9,10 @@ import java.util.Stack;
 parser code
 {:
     //codigo
-    public ArrayList<ErrorSintactico> listaErrores = new ArrayList<>();
+    public ArrayList<ErrorLSS> listaErrores = new ArrayList<>();
 
     public void setAccion(String tipo, String mensaje, String accion){
-        //listaErrores.add(new ErrorSintactico());
+        //listaErrores.add(new ErrorLSS());
     }
 
 	private Symbol s;
@@ -21,8 +21,8 @@ parser code
     }
 
     public void syntax_error(Symbol s){
-        String message = s.toString();
-        StringBuilder m = new StringBuilder("Error: ");
+        //String message = s.toString();
+        //StringBuilder m = new StringBuilder("Error: ");
         String cadena =  (String) s.value;
         int columna = s.left+1;
         int linea = s.right+1;
@@ -32,22 +32,22 @@ parser code
 
 	public void agregarError(String tipo, String cadena, String descripcion, int linea, int columna){
         System.out.println("Tipo: "+tipo+"\tCadena: "+cadena+", descripcion: "+descripcion+", Linea: "+linea+", Columna: "+columna);
-		listaErrores.add(new ErrorSintactico(linea,columna,cadena,descripcion,tipo));
+		listaErrores.add(new ErrorLSS(linea,columna,cadena,descripcion,tipo));
     }
 
 
 	public void unrecovered_syntax_error(Symbol cur_token){
         if(cur_token.toString().equals("#0")){
-			String message = s.toString();
-			StringBuilder m = new StringBuilder("Error: ");
+			//String message = s.toString();
+			//StringBuilder m = new StringBuilder("Error: ");
 			String cadena =  "Fin del archivo";
 			int columna = cur_token.left+1;
 			int linea = cur_token.right+1;
 			agregarError("Sintactico",cadena,"No se pudo recuperar y seguir analizando, no se encontraron mas tokens.", linea, columna);
             
         }else{
-			String message = s.toString();
-			StringBuilder m = new StringBuilder("Error: ");
+			//String message = s.toString();
+			//StringBuilder m = new StringBuilder("Error: ");
 			String cadena =  (String)cur_token.value;
 			int columna = cur_token.left+1;
 			int linea = cur_token.right+1;
@@ -197,7 +197,7 @@ struct_declaracion_var ::=
 	|struct_declaracion_var COMA error:e struct_operador_logico {:
 				parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo ID o fallo en la declaracion", eright+1, eleft+1);
                // System.out.println("Err: "+(eright+1)+", Col: "+(eleft+1)+", Token: "+e+", Descript: "+"Error de declaracion de variable");
-                //parser.listaErrores.add(new ErrorSintactico(eright+1,eleft+1,(String) e,"Error de declaracion de variable"));
+                //parser.listaErrores.add(new ErrorLSS(eright+1,eleft+1,(String) e,"Error de declaracion de variable"));
     :}
     |error:e tipo_dato IDENTIFICADOR IGUAL struct_operador_logico {:
 				parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo var", eright+1, eleft+1);
@@ -215,7 +215,7 @@ struct_declaracion_var_f ::=
 	|struct_declaracion_var_f COMA error:e struct_operador_logico {:
 				parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo ID o fallo en la declaracion", eright+1, eleft+1);
                // System.out.println("Err: "+(eright+1)+", Col: "+(eleft+1)+", Token: "+e+", Descript: "+"Error de declaracion de variable");
-                //parser.listaErrores.add(new ErrorSintactico(eright+1,eleft+1,(String) e,"Error de declaracion de variable"));
+                //parser.listaErrores.add(new ErrorLSS(eright+1,eleft+1,(String) e,"Error de declaracion de variable"));
     :}
     |error:e tipo_dato IDENTIFICADOR IGUAL struct_operador_logico {:
 				parser.agregarError("Sintactico",(String)e,"Se esperaba el Simbolo var", eright+1, eleft+1);
@@ -373,7 +373,9 @@ struc_asig_var ::=
 	|IDENTIFICADOR MAS_IGUAL struct_operador_logico
 	|IDENTIFICADOR MAS_MAS
 	|IDENTIFICADOR MENOS_MENOS
-	|IDENTIFICADOR error struct_operador_logico
+	|IDENTIFICADOR error:e {:
+				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un ID", eright+1, eleft+1);
+    :} struct_operador_logico
 	|error:e IGUAL struct_operador_logico {:
 				parser.agregarError("Sintactico",(String)e,"Error en la asignacion de variable, se esperaba un ID", eright+1, eleft+1);
     :}
@@ -554,7 +556,9 @@ code_funcion ::=
     |struct_longitud code_funcion
 	|struct_mensaje code_funcion
 	|RETORNAR struct_operador_logico code_funcion
-	|RETORNAR error
+	|RETORNAR error:e {:
+				parser.agregarError("Sintactico",(String)e,"Error: se esperaba un valor para Retornar", eright+1, eleft+1);
+    :}
 	|;
 
 code_metodo ::=

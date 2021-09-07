@@ -68,8 +68,12 @@ public class ComprobacionTipos {
                     }
                     return 0;
                 case "DOBLE":
-                    int entero2 = (Integer)(objeto);
-                    return entero2;
+                    try {
+                        int entero2 = (int)(objeto);
+                        return entero2;
+                    } catch (ClassCastException e) {
+                        return (int)((double)objeto);
+                    }
                 case "CARACTER":
                     int entero3 = (int)objeto.toString().charAt(0);
                     return entero3;
@@ -112,6 +116,7 @@ public class ComprobacionTipos {
     
     public Object convertirABoolean(Object objeto,String tipo){
         boolean bolean = false;
+        //System.out.println("Obj: "+objeto+", tp: "+tipo);
         try {
             switch(tipo){
                 case "ENTERO":
@@ -122,10 +127,10 @@ public class ComprobacionTipos {
                     }
                     break;
                 case "BOOLEAN":
-                    if((int)objeto==0 || !(boolean)objeto){
-                        bolean = false;
-                    }else if((int)objeto==1 || (boolean)objeto){
+                    if((boolean)objeto){
                         bolean = true;
+                    }else {
+                        bolean =false;
                     }
                     break;
             }
@@ -146,7 +151,12 @@ public class ComprobacionTipos {
                     return doble1;
             }
         } catch (ClassCastException e) {
-            return 0.0;
+            try {
+                return new Double(objeto+"");
+            } catch (ClassCastException ex) {
+                return 0.0;
+            }
+            
         }
         return 0.0;
     }

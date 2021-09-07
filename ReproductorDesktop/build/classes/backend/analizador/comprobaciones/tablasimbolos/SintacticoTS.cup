@@ -4,13 +4,14 @@ import java_cup.runtime.Symbol;
 import java.util.ArrayList;
 import java.util.Stack;
 import backend.analizador.objetos.*;
+import backend.analizador.ErrorLSS;
 
 
 //Codigo para el parser, variables, metodos
 parser code
 {:
     //codigo
-    //public ArrayList<ErrorSintactico> listaErrores = new ArrayList<>();
+    public ArrayList<ErrorLSS> listaErrores = new ArrayList<>();
 
     public void setAccion(String tipo, String mensaje, String accion){
     }
@@ -21,8 +22,8 @@ parser code
     }
 
     public void syntax_error(Symbol s){
-        String message = s.toString();
-        StringBuilder m = new StringBuilder("Error: ");
+        //String message = s.toString();
+        //StringBuilder m = new StringBuilder("Error: ");
         String cadena =  (String) s.value;
         int columna = s.left+1;
         int linea = s.right+1;
@@ -31,6 +32,7 @@ parser code
 
 	public void agregarError(String tipo, String cadena, String descripcion, int linea, int columna){
         System.out.println("Tipo: "+tipo+"\tCadena: "+cadena+", descripcion: "+descripcion+", Linea: "+linea+", Columna: "+columna);
+		listaErrores.add(new ErrorLSS(linea,columna,cadena,descripcion,tipo));
     }
 
 
@@ -62,7 +64,7 @@ terminal IGUAL_IGUAL, DIFERENTE, MAYOR_Q, MENOR_Q, MAYOR_IGUAL, MENOR_IGUAL, IS_
 terminal AND, NAND, OR, NOR, XOR, NOT;
 terminal MAS, MENOS, POR, DIVISION, MODULO, POTENCIA;
 terminal KEEP, VAR, IGUAL;
-terminal Integer NUMERO;
+terminal int NUMERO;
 terminal Double DECIMAL;
 terminal String CADENA;
 terminal Boolean TRUE, FALSE;
@@ -161,13 +163,14 @@ codigo ::= 	 struct_pista codigo
 
 struct_pista ::= 
 	 PISTA IDENTIFICADOR:a {:
+	 			reportar = true;
 				Simbolo s = new Simbolo(a,"PISTA",manejadorTablaSimbolos.ambitoFlag);
 				if(manejadorTablaSimbolos.isExistSimbolo(s)){
 					manejadorTablaSimbolos.agregarSimbolo(s);
 				}else{
 					parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
 				}
-	:} extiende_state st_ind struc_code st_final;
+	:} extiende_state st_ind struc_code st_final {: tablaSimbolos.pintar(); :};
 
 /*------------------------------------------------------------------------------ESTADO EXTIENDE O NO*/
 
@@ -191,7 +194,7 @@ struc_code ::=	 struct_declaracion_var struc_code
 struct_declaracion_var ::=	 
 	 struct_declaracion_var:ss COMA IDENTIFICADOR:a {:
 				Simbolo sAux =(Simbolo) ss;
-				Simbolo s = new Simbolo(a,sAux.getTipo(),manejadorTablaSimbolos.ambitoFlag,sAux.isIsKeep());
+				Simbolo s = new Simbolo(a,sAux.getTipo(),manejadorTablaSimbolos.ambitoFlag,(boolean)sAux.isIsKeep());
 				if(reportar){
 					if(manejadorTablaSimbolos.isExistSimbolo(s)){
 						manejadorTablaSimbolos.agregarSimbolo(s);
@@ -207,10 +210,11 @@ struct_declaracion_var ::=
 				Simbolo sr1 = (Simbolo) r;
 				Simbolo sr = (Simbolo) vr;
 				if(reportar && vr!=null){
-					s = new Simbolo(a,sr1.getTipo(),manejadorTablaSimbolos.ambitoFlag,sr1.isIsKeep());
+					s = new Simbolo(a,sr1.getTipo(),manejadorTablaSimbolos.ambitoFlag,(boolean)sr1.isIsKeep());
 					if(manejadorTablaSimbolos.isExistSimbolo(s)){
 						if(comprobacionTipos.getTipoDato(sr1.getTipo(),sr.getTipo())!=null ){
-							s.setObjeto(comprobacionTipos.convertir(vr.getObjeto(),sr.getTipo()));
+							s.setObjeto(comprobacionTipos.convertir(sr.getObjeto(),sr.getTipo()));
+							
 							manejadorTablaSimbolos.agregarSimbolo(s);
 						}else{
 							parser.agregarError("Semantico",a,"Error: no es posible asignar el valor a la varible nombre \""+a+"\", ya que no es del mismo tipo dato", vrright+1, vrleft+1);
@@ -223,7 +227,7 @@ struct_declaracion_var ::=
 				RESULT = s;
 	:}
 	|keep_state:k VAR tipo_dato:t IDENTIFICADOR:a IGUAL struct_operador_logico:vr {:
-				Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,k);
+				Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,(boolean)k);
 				Simbolo sr = (Simbolo) vr;
 				if(reportar && vr!=null){
 					if(manejadorTablaSimbolos.isExistSimbolo(s)){
@@ -241,7 +245,7 @@ struct_declaracion_var ::=
 				RESULT = s;
 	:}
 	|keep_state:k VAR tipo_dato:t IDENTIFICADOR:a {:
-				Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,k);
+				Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,(boolean)k);
 				if(reportar){
 					if(manejadorTablaSimbolos.isExistSimbolo(s)){
 						manejadorTablaSimbolos.agregarSimbolo(s);
@@ -268,15 +272,18 @@ keep_state ::=   KEEP {:RESULT = true;:}
 valor ::=	 
 	 IDENTIFICADOR:a {:
 	 			Simbolo s = new Simbolo(a,manejadorTablaSimbolos.ambitoFlag);
-				if(manejadorTablaSimbolos.buscarSimbolo(s)){
-					s = manejadorTablaSimbolos.getSimbolo();
-					RESULT = s;
-				}else{
-					if(reportar){
-						parser.agregarError("Semantico",a,"Error: No existe un simbolo con el nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+				if(reportar){
+					if(manejadorTablaSimbolos.buscarSimbolo(s)){
+						s = manejadorTablaSimbolos.getSimbolo();
+						RESULT = s;
+					}else{
+						if(reportar){
+							parser.agregarError("Semantico",a,"Error: No existe un simbolo con el nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+						}
+						
 					}
-					
 				}
+				
 	:}
 	|strunt_llamada_funcion:r {:RESULT = (Simbolo) r;:}
 	|struct_llamada_arreglo:r {:RESULT = (Simbolo) r;:}
@@ -298,25 +305,28 @@ valor ::=
 			RESULT = s;
 	:}
 	|TRUE {:
-			Simbolo s = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,true);
+			Simbolo s = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object)true);
 			RESULT = s;
 	:}
 	|FALSE {:
-			Simbolo s = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,false);
+			Simbolo s = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object)false);
 			RESULT = s;
 	:};
 
 strunt_llamada_funcion ::= 
 	 IDENTIFICADOR:a PA_A state_params:p PA_C {:
 	 			Simbolo s = new Simbolo(a,manejadorTablaSimbolos.ambitoFlag);
-				if(manejadorTablaSimbolos.buscarSimboloFuncionMetodo(s,"FUNCION")){
-					s = manejadorTablaSimbolos.getSimbolo();
-					RESULT = s.getTipo();
-				}else{
-					if(reportar){
-						parser.agregarError("Semantico",a,"Error: No existe una funcion con el nombre \""+a+"\" y parametros", aright+1, aleft+1);
+				 if(reportar && p!=null){
+					 	if(manejadorTablaSimbolos.buscarSimboloFuncionMetodo(s,"FUNCION")){
+							s = manejadorTablaSimbolos.getSimbolo();
+							RESULT = s.getTipo();
+					}else{
+						if(reportar){
+							parser.agregarError("Semantico",a,"Error: No existe una funcion con el nombre \""+a+"\" y parametros", aright+1, aleft+1);
+						}
 					}
-				}
+				 }
+				
 	:};
 
 
@@ -365,7 +375,7 @@ struct_operador_logico ::=
 				Simbolo sr = null;
 				if(reportar && (s1!=null && s2!=null)){
 					if((s1.getTipo().equals("BOOLEAN") || s2.getTipo().equals("BOOLEAN"))){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opLogicoOR(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opLogicoOR(s1,s2));
 					}else{
 						parser.agregarError("Semantico",(String) o,"Error en la operacion logica entre \"||\", las operaciones no son racionales, o no son booleanos", oright+1, oleft+1);
 					}
@@ -378,7 +388,7 @@ struct_operador_logico ::=
 				Simbolo sr = null;
 				if(reportar && (s1!=null && s2!=null)){
 					if((s1.getTipo().equals("BOOLEAN") || s2.getTipo().equals("BOOLEAN"))){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opLogicoNOR(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opLogicoNOR(s1,s2));
 					}else{
 						parser.agregarError("Semantico",(String) o,"Error en la operacion logica entre \"!||\", las operaciones no son racionales, o no son booleanos", oright+1, oleft+1);
 					}
@@ -391,7 +401,7 @@ struct_operador_logico ::=
 				Simbolo sr = null;
 				if(reportar && (s1!=null && s2!=null)){
 					if((s1.getTipo().equals("BOOLEAN") || s2.getTipo().equals("BOOLEAN"))){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opLogicoXOR(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opLogicoXOR(s1,s2));
 					}else{
 						parser.agregarError("Semantico",(String) o,"Error en la operacion logica entre \"&|\", las operaciones no son racionales, o no son booleanos", oright+1, oleft+1);
 					}
@@ -404,7 +414,7 @@ struct_operador_logico ::=
 				Simbolo sr = null;
 				if(reportar && (s1!=null && s2!=null)){
 					if((s1.getTipo().equals("BOOLEAN") || s2.getTipo().equals("BOOLEAN"))){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opLogicoAND(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opLogicoAND(s1,s2));
 					}else{
 						parser.agregarError("Semantico",(String) o,"Error en la operacion logica entre \"&&\", las operaciones no son racionales, o no son booleanos", oright+1, oleft+1);
 					}
@@ -417,7 +427,7 @@ struct_operador_logico ::=
 				Simbolo sr = null;
 				if(reportar && (s1!=null && s2!=null)){
 					if((s1.getTipo().equals("BOOLEAN") || s2.getTipo().equals("BOOLEAN"))){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opLogicoNAND(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opLogicoNAND(s1,s2));
 					}else{
 						parser.agregarError("Semantico",(String) o,"Error en la operacion logica entre \"!&&\", las operaciones no son racionales, o no son booleanos", oright+1, oleft+1);
 					}
@@ -429,7 +439,8 @@ struct_operador_logico ::=
 				Simbolo sr = null;
 				if(reportar && (s1!=null)){
 					if((s1.getTipo().equals("BOOLEAN"))){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opLogicoNOT(s1));
+						
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opLogicoNOT(s1));
 					}else{
 						parser.agregarError("Semantico",(String) o,"Error en la operacion logica \"!\", las operacion no es racional, o no es booleana", oright+3, oleft+3);
 					}
@@ -437,7 +448,7 @@ struct_operador_logico ::=
 				RESULT = sr;
 	:}
 	|struct_operador_relacional:r {:RESULT = (Simbolo) r;:}
-	|valor_operacion:r {:RESULT = (Simbolo) r;:} ;
+	|valor_operacion:r {: RESULT = (Simbolo) r; :} ;
 
 state_op_logicos::= OR | NOR | XOR | AND | NAND;
 
@@ -448,19 +459,20 @@ struct_operador_relacional ::=
 				Simbolo sr = null;
 				if(reportar && s1!=null && s2!=null){
 					if(s1.getTipo().equals(s2.getTipo())){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalIgualIgual(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalIgualIgual(s1,s2));
 					}else if (s1.getTipo().equals("CARACTER") && s1.getTipo().equals("ENTERO")){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalIgualIgual(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalIgualIgual(s1,s2));
 					}else if(s1.getTipo().equals("ENTERO") && s1.getTipo().equals("CARACTER")){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalIgualIgual(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalIgualIgual(s1,s2));
 					}else if (s1.getTipo().equals("DOBLE") && s1.getTipo().equals("ENTERO")){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalIgualIgual(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalIgualIgual(s1,s2));
 					}else if(s1.getTipo().equals("ENTERO") && s1.getTipo().equals("DOBLE")){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalIgualIgual(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalIgualIgual(s1,s2));
 					}else{
 						parser.agregarError("Semantico",(String) o,"Error en la operacion racional entre \"==\", estos tipos de datos no puedens ser comparados", oright+1, oleft+1);
 					}
 				}
+				RESULT = sr;
 	:}
 	|valor_operacion:v1 DIFERENTE:o valor_operacion:v2 {:
 				Simbolo s1 = (Simbolo) v1;
@@ -468,19 +480,20 @@ struct_operador_relacional ::=
 				Simbolo sr = null;
 				if(reportar && s1!=null && s2!=null){
 					if(s1.getTipo().equals(s2.getTipo())){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalDiferente(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalDiferente(s1,s2));
 					}else if (s1.getTipo().equals("CARACTER") && s1.getTipo().equals("ENTERO")){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalDiferente(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalDiferente(s1,s2));
 					}else if(s1.getTipo().equals("ENTERO") && s1.getTipo().equals("CARACTER")){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalDiferente(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalDiferente(s1,s2));
 					}else if (s1.getTipo().equals("DOBLE") && s1.getTipo().equals("ENTERO")){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalDiferente(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalDiferente(s1,s2));
 					}else if(s1.getTipo().equals("ENTERO") && s1.getTipo().equals("DOBLE")){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalDiferente(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalDiferente(s1,s2));
 					}else{
 						parser.agregarError("Semantico",(String) o,"Error en la operacion racional entre \"!=\", estos tipos de datos no puedens ser comparados", oright+1, oleft+1);
 					}
 				}
+				RESULT = sr;
 	:}
 	|valor_operacion:v1 MAYOR_Q:o valor_operacion:v2 {:
 				Simbolo s1 = (Simbolo) v1;
@@ -488,11 +501,12 @@ struct_operador_relacional ::=
 				Simbolo sr = null;
 				if(reportar && s1!=null && s2!=null){
 					if(!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA")){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalMayorQ(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalMayorQ(s1,s2));
 					}else{
 						parser.agregarError("Semantico",(String) o,"Error en la operacion racional entre \">\", es posible realizarlo entre cadenas", oright+1, oleft+1);
 					}
 				}
+				RESULT = sr;
 	:}
 	|valor_operacion:v1 MENOR_Q:o valor_operacion:v2 {:
 				Simbolo s1 = (Simbolo) v1;
@@ -500,11 +514,12 @@ struct_operador_relacional ::=
 				Simbolo sr = null;
 				if(reportar && s1!=null && s2!=null){
 					if(!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA")){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalMenorQ(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalMenorQ(s1,s2));
 					}else{
 						parser.agregarError("Semantico",(String) o,"Error en la operacion racional entre \"<\", es posible realizarlo entre cadenas", oright+1, oleft+1);
 					}
 				}
+				RESULT = sr;
 				
 	:}
 	|valor_operacion:v1 MAYOR_IGUAL:o valor_operacion:v2 {:
@@ -513,11 +528,12 @@ struct_operador_relacional ::=
 				Simbolo sr = null;
 				if(reportar && s1!=null && s2!=null){
 					if(!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA")){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalMayorQIgual(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalMayorQIgual(s1,s2));
 					}else{
 						parser.agregarError("Semantico",(String) o,"Error en la operacion racional entre \">=\", es posible realizarlo entre cadenas", oright+1, oleft+1);
 					}
 				}
+				RESULT = sr;
 	:}
 	|valor_operacion:v1 MENOR_IGUAL:o valor_operacion:v2 {:
 				Simbolo s1 = (Simbolo) v1;
@@ -525,33 +541,30 @@ struct_operador_relacional ::=
 				Simbolo sr = null;
 				if(reportar && s1!=null && s2!=null){
 					if(!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA")){
-						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag, comprobacionTipos.opRacionalMenorQIgual(s1,s2));
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) comprobacionTipos.opRacionalMenorQIgual(s1,s2));
 					}else{
 						parser.agregarError("Semantico",(String) o,"Error en la operacion racional entre \"<=\", es posible realizarlo entre cadenas", oright+1, oleft+1);
 					}
 				}
+				RESULT = sr;
 	:}
 	|IS_NULL:o valor_operacion:v1 {:
 				Simbolo s1 = (Simbolo) v1;
+				Simbolo sr = null;
 				if(reportar && s1!=null){
-					if(s1.getTipo().equals("BOOLEAN")){
-						s1.setObjeto(!((boolean)s1.getObjeto()));
-						RESULT = s1;
-					}else{
-						parser.agregarError("Semantico",(String) o,"Error en la operacion racional, no es un valor booleano", v1right+1, v1left+1);
-					}
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) (s1.getObjeto()==null));
+						RESULT = sr;
 				}
+				//RESULT = sr;
 	:}
 	|IS_NULL:o struct_operador_relacional:v1 {:
 				Simbolo s1 = (Simbolo) v1;
+				Simbolo sr = null;
 				if(reportar && s1!=null){
-					if(s1.getTipo().equals("BOOLEAN")){
-						s1.setObjeto(!((boolean)s1.getObjeto()));
-						RESULT = s1;
-					}else{
-						parser.agregarError("Semantico",(String) o,"Error en la operacion racional, no es un valor booleano", v1right+1, v1left+1);
-					}
+						sr = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object) (s1.getObjeto()==null));
+						RESULT = sr;
 				}
+				//RESULT = sr;
 	:}
 	|PA_A struct_operador_relacional:r1 PA_C {: RESULT=r1; :};
 								
@@ -571,11 +584,11 @@ valor_operacion ::=
 						if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("ENTERO")){
 							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag,(((int)s1.getObjeto().toString().charAt(0))+(int)s2.getObjeto()));
 						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("CARACTER")){
-							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag, ((int)s1.getObjeto())+((int)s1.getObjeto().toString().charAt(0)));
+							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag, ((int)s1.getObjeto())+((int)s2.getObjeto().toString().charAt(0)));
 						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("ENTERO")){
-							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag, ((int)s2.getObjeto())+(int)s2.getObjeto());
+							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag, ((int)s1.getObjeto())+(int)s2.getObjeto());
 						}else if((s1.getTipo().equals("ENTERO") && s2.getTipo().equals("DOBLE")) || (s1.getTipo().equals("DOBLE") && s2.getTipo().equals("ENTERO"))){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)s2.getObjeto())+(double)s2.getObjeto());
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)comprobacionTipos.convertirADoble(s1.getObjeto(),"DOBLE")+(double)comprobacionTipos.convertirADoble(s2.getObjeto(),"DOBLE")));
 						}else{
 							parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"+\"", oright+1, oleft+1);
 						}
@@ -594,11 +607,11 @@ valor_operacion ::=
 						if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("ENTERO")){
 							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag,(((int)s1.getObjeto().toString().charAt(0))-(int)s2.getObjeto()));
 						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("CARACTER")){
-							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag, ((int)s1.getObjeto())-((int)s1.getObjeto().toString().charAt(0)));
+							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag, ((int)s1.getObjeto())-((int)s2.getObjeto().toString().charAt(0)));
 						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("ENTERO")){
-							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag, ((int)s2.getObjeto())-(int)s2.getObjeto());
+							sr = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag, ((int)s1.getObjeto())-(int)s2.getObjeto());
 						}else if((s1.getTipo().equals("ENTERO") && s2.getTipo().equals("DOBLE")) || (s1.getTipo().equals("DOBLE") && s2.getTipo().equals("ENTERO"))){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)s2.getObjeto())-(double)s2.getObjeto());
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)comprobacionTipos.convertirADoble(s1.getObjeto(),"DOBLE")-(double)comprobacionTipos.convertirADoble(s2.getObjeto(),"DOBLE")));
 						}else{
 							parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"-\"", oright+1, oleft+1);
 						}
@@ -611,17 +624,17 @@ valor_operacion ::=
 				Simbolo s2 = r2;
 				Simbolo sr = null;
 				if(reportar && (s1!=null && s2!=null)){
-					if((!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA"))){
+					if((s1.getTipo().equals("CADENA") || s2.getTipo().equals("CADENA"))){
 						parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"*\", no es posible realizar esta operacion entre cadenas", oright+1, oleft+1);
 					}else{
 						if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("ENTERO")){
 							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double)(((int)s1.getObjeto().toString().charAt(0))*(int)s2.getObjeto()));
 						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("CARACTER")){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)((int)s1.getObjeto())*((int)s1.getObjeto().toString().charAt(0))));
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)((int)s1.getObjeto())*((int)s2.getObjeto().toString().charAt(0))));
 						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("ENTERO")){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)((int)s2.getObjeto())*(int)s2.getObjeto()));
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)((int)s1.getObjeto())*(int)s2.getObjeto()));
 						}else if((s1.getTipo().equals("ENTERO") && s2.getTipo().equals("DOBLE")) || (s1.getTipo().equals("DOBLE") && s2.getTipo().equals("ENTERO"))){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)s2.getObjeto())*(double)s2.getObjeto());
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)comprobacionTipos.convertirADoble(s1.getObjeto(),"DOBLE")*(double)comprobacionTipos.convertirADoble(s2.getObjeto(),"DOBLE")));
 						}else{
 							parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"*\"", oright+1, oleft+1);
 						}
@@ -634,17 +647,17 @@ valor_operacion ::=
 				Simbolo s2 = r2;
 				Simbolo sr = null;
 				if(reportar && (s1!=null && s2!=null)){
-					if((!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA"))){
+					if((s1.getTipo().equals("CADENA") || s2.getTipo().equals("CADENA"))){
 						parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"/\", no es posible realizar esta operacion entre cadenas", oright+1, oleft+1);
 					}else{
 						if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("ENTERO")){
 							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double)(((int)s1.getObjeto().toString().charAt(0))/(int)s2.getObjeto()));
 						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("CARACTER")){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((int)s1.getObjeto())/((int)s1.getObjeto().toString().charAt(0))));
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((int)s1.getObjeto())/((int)s2.getObjeto().toString().charAt(0))));
 						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("ENTERO")){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((int)s2.getObjeto())/(int)s2.getObjeto()));
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((int)s1.getObjeto())/(int)s2.getObjeto()));
 						}else if((s1.getTipo().equals("ENTERO") && s2.getTipo().equals("DOBLE")) || (s1.getTipo().equals("DOBLE") && s2.getTipo().equals("ENTERO"))){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((double)s2.getObjeto())/(double)s2.getObjeto()));
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, ((double)comprobacionTipos.convertirADoble(s1.getObjeto(),"DOBLE")/(double)comprobacionTipos.convertirADoble(s2.getObjeto(),"DOBLE")));
 						}else{
 							parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"/\"", oright+1, oleft+1);
 						}
@@ -657,17 +670,17 @@ valor_operacion ::=
 				Simbolo s2 = r2;
 				Simbolo sr = null;
 				if(reportar && (s1!=null && s2!=null)){
-					if((!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA"))){
+					if((s1.getTipo().equals("CADENA") || s2.getTipo().equals("CADENA"))){
 						parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"%\", no es posible realizar esta operacion entre cadenas", oright+1, oleft+1);
 					}else{
 						if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("ENTERO")){
 							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((int)s1.getObjeto().toString().charAt(0))%(int)s2.getObjeto()));
 						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("CARACTER")){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((int)s1.getObjeto())%((int)s1.getObjeto().toString().charAt(0))));
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((int)s1.getObjeto())%((int)s2.getObjeto().toString().charAt(0))));
 						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("ENTERO")){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, (((int)s2.getObjeto())%(int)s2.getObjeto()));
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag, (((int)s1.getObjeto())%(int)s2.getObjeto()));
 						}else if((s1.getTipo().equals("ENTERO") && s2.getTipo().equals("DOBLE")) || (s1.getTipo().equals("DOBLE") && s2.getTipo().equals("ENTERO"))){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (((double)s2.getObjeto())%(double)s2.getObjeto()));
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,((double)comprobacionTipos.convertirADoble(s1.getObjeto(),"DOBLE")%(double)comprobacionTipos.convertirADoble(s2.getObjeto(),"DOBLE")));
 						}else{
 							parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"%\"", oright+1, oleft+1);
 						}
@@ -680,17 +693,17 @@ valor_operacion ::=
 				Simbolo s2 = r2;
 				Simbolo sr = null;
 				if(reportar && (s1!=null && s2!=null)){
-					if((!s1.getTipo().equals("CADENA") && !s2.getTipo().equals("CADENA"))){
+					if((s1.getTipo().equals("CADENA") || s2.getTipo().equals("CADENA"))){
 						parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"^\", no es posible realizar esta operacion entre cadenas", oright+1, oleft+1);
 					}else{
 						if(s1.getTipo().equals("CARACTER") && s2.getTipo().equals("ENTERO")){
 							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) ((Math.pow((int)s1.getObjeto().toString().charAt(0),(int)s2.getObjeto()))));
 						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("CARACTER")){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (Math.pow((int)s1.getObjeto(),((int)s1.getObjeto().toString().charAt(0)))));
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (Math.pow((int)s1.getObjeto(),((int)s2.getObjeto().toString().charAt(0)))));
 						}else if(s1.getTipo().equals("ENTERO") && s2.getTipo().equals("ENTERO")){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (Math.pow((int)s2.getObjeto(),(int)s2.getObjeto())));
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (Math.pow((int)s1.getObjeto(),(int)s2.getObjeto())));
 						}else if((s1.getTipo().equals("ENTERO") && s2.getTipo().equals("DOBLE")) || (s1.getTipo().equals("DOBLE") && s2.getTipo().equals("ENTERO"))){
-							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (Math.pow((double)s2.getObjeto(),(double)s2.getObjeto())));
+							sr = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(double) (Math.pow((double)comprobacionTipos.convertirADoble(s1.getObjeto(),"DOBLE"),(double)comprobacionTipos.convertirADoble(s2.getObjeto(),"DOBLE"))));
 						}else{
 							parser.agregarError("Semantico",(String) o,"Error en la operacion entre \"^\"", oright+1, oleft+1);
 						}
@@ -698,16 +711,15 @@ valor_operacion ::=
 				}
 				RESULT = sr;
 	:}
-	|PA_A valor_operacion:r PA_C {:RESULT = r;:}
-	|valor:r  {:RESULT = r;:};
+	|PA_A valor_operacion:r PA_C {: RESULT = r;:}
+	|valor:r  {: RESULT = r;:};
 
 
 struc_asig_var ::= 	 
 	 IDENTIFICADOR IGUAL struct_operador_logico
 	|IDENTIFICADOR MAS_IGUAL struct_operador_logico
 	|IDENTIFICADOR MAS_MAS
-	|IDENTIFICADOR MENOS_MENOS
-	|IDENTIFICADOR error struct_operador_logico;
+	|IDENTIFICADOR MENOS_MENOS;
 
 /*------------------------------------------------------------------------------Estructura arreglo*/
 
@@ -766,7 +778,7 @@ struct_declaracion_array ::=
 				if(reportar && d!=null && vs!=null){
 					ArrayList<Integer> dimens = (ArrayList<Integer>) d;
 					ArrayList<Object> lista = (ArrayList<Object>) vs;
-					Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,new Arreglo(t,dimens),k,true);
+					Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,new Arreglo(t,dimens),(boolean)k,true);
 					if(manejadorTablaSimbolos.isExistSimbolo(s)){
 						if(manejadorArreglos.verificarDimArreglo(lista)){
 							if(manejadorArreglos.compararDims(dimens)){
@@ -789,7 +801,7 @@ struct_declaracion_array ::=
 	|keep_state:k VAR tipo_dato:t ARREGLO IDENTIFICADOR:a {:
 				if(reportar){
 					//ArrayList<Integer> dimens = (ArrayList<Integer>) d;
-					Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,new Arreglo(t),k,true);
+					Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,new Arreglo(t),(boolean)k,true);
 					if(manejadorTablaSimbolos.isExistSimbolo(s)){
 						manejadorTablaSimbolos.agregarSimbolo(s);
 					}else{
@@ -801,7 +813,7 @@ struct_declaracion_array ::=
 	|keep_state:k VAR tipo_dato:t ARREGLO IDENTIFICADOR:a dim_arreglo:d {:
 				if(reportar && d!=null){
 					ArrayList<Integer> dimens = (ArrayList<Integer>) d;
-					Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,new Arreglo(t,dimens),k,true);
+					Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,new Arreglo(t,dimens),(boolean)k,true);
 					if(manejadorTablaSimbolos.isExistSimbolo(s)){
 						manejadorTablaSimbolos.agregarSimbolo(s);
 					}else{
@@ -827,7 +839,7 @@ dim_arreglo ::=
 				if(reportar && v!=null){
 					Simbolo s = (Simbolo) v;
 					if(s.getTipo().equals("ENTERO") || s.getTipo().equals("DOBLE")){
-						lista.add((int)s.getObjeto());
+						lista.add((int)comprobacionTipos.convertirAEntero(s.getObjeto(), "DOBLE"));
 					}else{
 						parser.agregarError("Semantico","[<numeric>]","Error: el valor de la dimesion no es numerico", vright+1, vleft+1);
 					}
@@ -839,7 +851,7 @@ dim_arreglo ::=
 				if(reportar && v!=null){
 					Simbolo s = (Simbolo) v;
 					if(s.getTipo().equals("ENTERO") || s.getTipo().equals("DOBLE")){
-						lista.add((int)s.getObjeto());
+						lista.add((int)comprobacionTipos.convertirAEntero(s.getObjeto(), "DOBLE"));
 					}else{
 						parser.agregarError("Semantico","[<numeric>]","Error: el valor de la dimesion no es numerico", vright+1, vleft+1);
 					}
@@ -1016,7 +1028,6 @@ code_funcion ::=
     |struct_longitud code_funcion
 	|struct_mensaje code_funcion
 	|RETORNAR struct_operador_logico code_funcion
-	|RETORNAR error
 	|;
 
 code_metodo ::=

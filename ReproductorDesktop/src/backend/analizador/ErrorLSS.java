@@ -1,17 +1,26 @@
 
 package backend.analizador;
 
-public class ErrorLexico {
+import java_cup.runtime.Symbol;
+
+public class ErrorLSS {
     private int linea, columna;
     private String token, descripcion, tipo;
+    private Symbol simbol;
 
-    public ErrorLexico(int linea, int columna, String token, String descripcion, String tipo) {
+    public ErrorLSS(int linea, int columna, String token, String descripcion, String tipo) {
         this.linea = linea;
         this.columna = columna;
         this.token = token;
         this.descripcion = descripcion;
         this.tipo = tipo;
     }
+
+    public ErrorLSS(Symbol simbol) {
+        this.simbol = simbol;
+//        simbol.value
+    }
+    
 
     public int getLinea() {
         return linea;
@@ -44,6 +53,24 @@ public class ErrorLexico {
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
     }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    public Symbol getSimbol() {
+        return simbol;
+    }
+
+    public void setSimbol(Symbol simbol) {
+        this.simbol = simbol;
+    }
+    
+    
     
     
 }

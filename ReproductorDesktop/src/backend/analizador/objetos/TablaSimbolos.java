@@ -47,5 +47,10 @@ public class TablaSimbolos {
     }
     
     
+    public void pintar(){
+        for (int i = 0; i < listaSimbolos.size(); i++) {
+            System.out.println("Nombre: "+listaSimbolos.get(i).getNombre()+", Tipo: "+listaSimbolos.get(i).getTipo()+", Valor: "+listaSimbolos.get(i).getObjeto());
+        }
+    }
     
 }

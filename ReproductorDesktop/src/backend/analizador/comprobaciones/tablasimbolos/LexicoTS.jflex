@@ -1,5 +1,5 @@
-package backend.analizador.comprobaciones.tablaSimbolos;
-import backend.analizador.ErrorLexico;
+package backend.analizador.comprobaciones.tablasimbolos;
+import backend.analizador.ErrorLSS;
 import java_cup.runtime.*;
 import java.util.ArrayList;
 import java.util.Stack;
@@ -7,9 +7,9 @@ import java.util.Stack;
 %%
 %{
 
-    public ArrayList<ErrorLexico> listaErrores = new ArrayList<>();
+    public ArrayList<ErrorLSS> listaErrores = new ArrayList<>();
 
-    private void agregarError(ErrorLexico errorL){
+    private void agregarError(ErrorLSS errorL){
         listaErrores.add(errorL);
     }
 
@@ -43,9 +43,9 @@ import java.util.Stack;
                 //UN SALATO DE LINEA
                 //System.out.println("SALTO DE LINEA: "+ambito);
             }else{
-                //error de identacion
-                //System.out.println("Error de identacion");
-                //agregarError(new ErrorLexico(yyline + 1,yycolumn + 1, yytext(), "Error de Indentacion", "Sintactico"));
+                //ErrorLSS de identacion
+                //System.out.println("ErrorLSS de identacion");
+                //agregarError(new ErrorLSS(yyline + 1,yycolumn + 1, yytext(), "ErrorLSS de Indentacion", "Sintactico"));
             }
         }
         return null;
@@ -67,9 +67,9 @@ import java.util.Stack;
                 //UN SALATO DE LINEA
                 //System.out.println("SALTO DE LINEA: "+ambito);
             }else{
-                //error de identacion
-                //System.out.println("Error de identacion");
-                //agregarError(new ErrorLexico(yyline + 1,yycolumn + 1, yytext(), "Error de Indentacion", "Sintactico"));
+                //ErrorLSS de identacion
+                //System.out.println("ErrorLSS de identacion");
+                //agregarError(new ErrorLSS(yyline + 1,yycolumn + 1, yytext(), "ErrorLSS de Indentacion", "Sintactico"));
             }
         }
         return null;
@@ -241,7 +241,7 @@ TabsS                = ("    ")+
     ({Letra}("_"|{Letra}|{Numero})*)        {return new Symbol(SimbolosTS.IDENTIFICADOR , yycolumn, yyline, yytext());}
     ({Numero})                              {return new Symbol(SimbolosTS.NUMERO , yycolumn, yyline, new Integer(yytext()));}
     ({Numero}("\."){Numero})                {return new Symbol(SimbolosTS.DECIMAL , yycolumn, yyline, new Double(yytext()));}
-    ({Cadena})                              {return new Symbol(SimbolosTS.CADENA , yycolumn, yyline, yytext());}
+    ({Cadena})                              {return new Symbol(SimbolosTS.CADENA , yycolumn, yyline, yytext().substring(1, yytext().length()-1));}
     ("'"("#'"|"##"|"#r"|"#t"|"#n")"'")      {return new Symbol(SimbolosTS.CARACTER , yycolumn, yyline, yytext().substring(1, yytext().length()-1));}
     ("'"({Letra}|{Signo}|{Digito})"'")      {return new Symbol(SimbolosTS.CARACTER , yycolumn, yyline, yytext().substring(1, yytext().length()-1));}
 

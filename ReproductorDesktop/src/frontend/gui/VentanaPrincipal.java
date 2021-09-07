@@ -8,7 +8,11 @@ package frontend.gui;
 import backend.archivos.Archivo;
 import backend.analizador.AnalizadorLexico;
 import backend.analizador.AnalizadorSintactico;
-import backend.analizador.ErrorLexico;
+import backend.analizador.ErrorLSS;
+import backend.analizador.ast.gramatica.AnalizadorLexicoAST;
+import backend.analizador.ast.gramatica.AnalizadorSintacticoAST;
+import backend.analizador.comprobaciones.tablasimbolos.AnalizadorLexicoTS;
+import backend.analizador.comprobaciones.tablasimbolos.AnalizadorSintacticoTS;
 import frontend.gui.editor.AnalizadorLexicoCode;
 import frontend.gui.editor.AnalizadorSintacticoCode;
 import frontend.gui.editor.LineasText;
@@ -18,9 +22,11 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
+import javax.swing.table.DefaultTableModel;
 
 
 public class VentanaPrincipal extends javax.swing.JFrame {
@@ -28,11 +34,12 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     public LineasText lines;
     private Archivo archivo;
     private int posicionCursor;
+    DefaultTableModel model = new DefaultTableModel();
     
     public VentanaPrincipal() {
         initComponents();
         this.setLocationRelativeTo(null);
-        this.setSize(1000, 500);
+        this.setSize(1200, 700);
         lines =new LineasText();
         archivo = new Archivo();
         panelCodigo.add(lines,BorderLayout.WEST);
@@ -40,24 +47,29 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         //lines.pane
         jTabbedPane1.setSelectedIndex(1);
         posicionPuntero();
-        JTextArea area = new JTextArea();
-        //area.setTabSize(WIDTH);
         
-        /*
         lines.pane.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 paneCodeKeyReleased(evt);
             }
-        });*/
-        
-        //lines.pane.setText(archivo.leerArchivo("./entrada_pista.txt"));
-        //pintarTexto();
-        
+        });
         
     }
     
-    private void iniciarLIneaText(){
+    private void iniciarModelo(){
+        model = new DefaultTableModel();
+        model.addColumn("Linea");
+        model.addColumn("Columna");
+        model.addColumn("Tipo");
+        model.addColumn("Descripcion");
+    }
+    
+    public void reportarErrores(ArrayList<ErrorLSS> lista){
         
+        for (int i = 0; i < lista.size(); i++) {
+            System.out.println("Reportado: "+lista.get(i).getLinea()+", "+lista.get(i).getColumna()+", "+lista.get(i).getTipo()+", "+lista.get(i).getDescripcion());
+            model.addRow(new Object[]{lista.get(i).getLinea(),lista.get(i).getColumna(), lista.get(i).getTipo(),lista.get(i).getDescripcion()});
+        }
     }
     
     public void pintarTexto(){
@@ -65,10 +77,6 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         AnalizadorLexicoCode analizadorLexicoCode = new AnalizadorLexicoCode(new StringReader(texto));
         analizadorLexicoCode.pintar.insertar(lines.pane.getText());
         lines.pane.setDocument(analizadorLexicoCode.pintar.caja2.getDocument());
-        System.out.println(lines.pane.getText());
-        //lines.pane.setCaretPosition(posicionCursor-1);
-        //posicionPuntero();
-        //lines.pane.setText(analizadorLexicoCode.pintar.caja2.getText());
         AnalizadorSintacticoCode analizadorSintacticoCode = new AnalizadorSintacticoCode(analizadorLexicoCode);
         
         try {
@@ -104,8 +112,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                     }
                 }		
 		columna=pos-ultimalinea;                
-                //noFila.setText(fila +"");
-                //noCol.setText(columna+"");
+                noFila.setText(fila +"");
+                noCol.setText(columna+"");
                 //System.out.println("PosicionC: "+posicionCursor);
             }
         });
@@ -113,32 +121,63 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     }
     
     private void paneCodeKeyReleased(java.awt.event.KeyEvent evt){
-        /*if(evt.getKeyCode()==KeyEvent.VK_ENTER){
-            //System.out.println("Hola");
+        if(evt.getKeyCode()==KeyEvent.VK_ENTER){
             int fila = 0;
-                //JTextArea jta = (JTextArea) textComp;
-                //return jta.getLineStartOffset(lineNumber-1);
-                fila = posicionCursor;
-               // fila = lines.pane.get
-                
+            fila = posicionCursor;
             pintarTexto();
-            System.out.println("Posicion cursor: "+(fila-1));
             lines.pane.setCaretPosition(fila-1);
         }
         else if(evt.getKeyCode()==KeyEvent.VK_SPACE){
-            //System.out.println("Hola");
             int fila = 0;
-                //JTextArea jta = (JTextArea) textComp;
-                //return jta.getLineStartOffset(lineNumber-1);
-                fila = posicionCursor;
-               // fila = lines.pane.get
-                
+            fila = posicionCursor;
             pintarTexto();
             lines.pane.setCaretPosition(fila-1);
-        }*/
+        }
     }
 
+    public void compilar(){
+        String texto = lines.pane.getText();
+        AnalizadorLexico lexico = new AnalizadorLexico(new StringReader(texto));
+        AnalizadorLexicoTS lexico2 = new AnalizadorLexicoTS(new StringReader(texto));
+        lexico.iniciar();
+        lexico2.iniciar();
+        AnalizadorSintactico sintactico = new AnalizadorSintactico(lexico);
+        AnalizadorSintacticoTS sintacticoTS = new AnalizadorSintacticoTS(lexico2);
+        try {
+            sintactico.parse();
+            sintacticoTS.parse();
+            if(lexico.listaErrores.size()>0 || sintactico.listaErrores.size()>0 || sintacticoTS.listaErrores.size()>0){
+                iniciarModelo();
+                reportarErrores(lexico.listaErrores);
+                reportarErrores(sintactico.listaErrores);
+                reportarErrores(sintacticoTS.listaErrores);
+                tablaErrores.setModel(model);
+                JOptionPane.showMessageDialog(null, "La pista contiene errores");
+            }else{
+                iniciarModelo();
+                tablaErrores.setModel(model);
+                compilarAST();
+                
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(VentanaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+            
+        }
+    }
     
+    public void compilarAST(){
+        String texto = lines.pane.getText();
+        AnalizadorLexicoAST lexicoAST = new AnalizadorLexicoAST(new StringReader(texto));
+        lexicoAST.iniciar();
+        AnalizadorSintacticoAST sintacticoAST = new AnalizadorSintacticoAST(lexicoAST);
+        try {
+            sintacticoAST.parse();
+            //JOptionPane.showMessageDialog(null, "La pista no contiene errores");
+        } catch (Exception ex) {
+            Logger.getLogger(VentanaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+            
+        }
+    }
     
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -187,9 +226,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         paneBotEditor = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
-        jScrollPane5 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
+        tablaErrores = new javax.swing.JTable();
         panelCentralEditor = new javax.swing.JPanel();
         labelFIla = new javax.swing.JLabel();
         noFila = new javax.swing.JLabel();
@@ -264,7 +301,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel5Layout.createSequentialGroup()
                         .addComponent(bntCrear)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btnEditar, javax.swing.GroupLayout.DEFAULT_SIZE, 68, Short.MAX_VALUE)
+                        .addComponent(btnEditar, javax.swing.GroupLayout.DEFAULT_SIZE, 106, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnEliminar)
                         .addGap(4, 4, 4)))
@@ -276,7 +313,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 401, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 529, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
                 .addComponent(btnReproducir)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -318,7 +355,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                     .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
                         .addComponent(btnModificar, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 16, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 91, Short.MAX_VALUE)
                         .addComponent(btnEliminarLista, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
@@ -328,7 +365,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 202, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 334, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnModificar)
@@ -446,7 +483,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                 .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, 48, Short.MAX_VALUE))
+                                .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addComponent(labelT1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -460,7 +497,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(labelT2, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(checkBoxRepetir, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                                .addComponent(checkBoxRepetir, javax.swing.GroupLayout.DEFAULT_SIZE, 201, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -470,7 +507,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel4Layout.createSequentialGroup()
                         .addComponent(jLabel5)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 251, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 378, Short.MAX_VALUE)
                         .addComponent(jLabel6))
                     .addComponent(panelFrecuencia, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -497,34 +534,25 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         panelEditorCodigo.setLayout(new java.awt.BorderLayout());
 
         jPanel2.setBackground(new java.awt.Color(66, 142, 225));
-        jPanel2.setLayout(new java.awt.GridLayout());
+        jPanel2.setLayout(new java.awt.GridLayout(1, 0));
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        tablaErrores.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null},
-                {null, null, null},
-                {null, null, null},
-                {null, null, null}
+
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3"
+
             }
         ));
-        jScrollPane4.setViewportView(jTable1);
+        jScrollPane4.setViewportView(tablaErrores);
 
         jPanel2.add(jScrollPane4);
-
-        jTextArea1.setColumns(20);
-        jTextArea1.setRows(5);
-        jScrollPane5.setViewportView(jTextArea1);
-
-        jPanel2.add(jScrollPane5);
 
         javax.swing.GroupLayout paneBotEditorLayout = new javax.swing.GroupLayout(paneBotEditor);
         paneBotEditor.setLayout(paneBotEditorLayout);
         paneBotEditorLayout.setHorizontalGroup(
             paneBotEditorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 1260, Short.MAX_VALUE)
         );
         paneBotEditorLayout.setVerticalGroup(
             paneBotEditorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -546,6 +574,11 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         panelCodigo.setLayout(new java.awt.BorderLayout());
 
         btnCompilar.setText("Compilar");
+        btnCompilar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCompilarActionPerformed(evt);
+            }
+        });
 
         btnReproducirEditor.setText("Reproducir Pista");
 
@@ -565,7 +598,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(noCol, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 518, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 725, Short.MAX_VALUE)
                         .addComponent(btnReproducirEditor)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnCompilar)))
@@ -575,7 +608,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             panelCentralEditorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelCentralEditorLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(panelCodigo, javax.swing.GroupLayout.DEFAULT_SIZE, 361, Short.MAX_VALUE)
+                .addComponent(panelCodigo, javax.swing.GroupLayout.DEFAULT_SIZE, 493, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(panelCentralEditorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(labelFIla)
@@ -705,6 +738,10 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_btnStopActionPerformed
 
+    private void btnCompilarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompilarActionPerformed
+        compilar();
+    }//GEN-LAST:event_btnCompilarActionPerformed
+
     
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -754,10 +791,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTextArea jTextArea1;
     private javax.swing.JLabel labelFIla;
     private javax.swing.JLabel labelT1;
     private javax.swing.JLabel labelT2;
@@ -777,5 +811,6 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private javax.swing.JPanel panelEditorCodigo;
     private javax.swing.JPanel panelFrecuencia;
     private javax.swing.JSlider slider;
+    private javax.swing.JTable tablaErrores;
     // End of variables declaration//GEN-END:variables
 }

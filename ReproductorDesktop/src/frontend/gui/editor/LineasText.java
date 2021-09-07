@@ -40,22 +40,10 @@ public class LineasText extends JPanel{
       }
     };
     pane.setFont(new java.awt.Font("Monospaced", 0, 13));
-    Font font = new Font("Monospaced", Font.PLAIN, 13);
-    Toolkit t = Toolkit.getDefaultToolkit();
-    FontMetrics fm = t.getFontMetrics(font);
-    int cw = fm.stringWidth("    ");
-    float f = (float)cw;
-    TabStop[] tabs = new TabStop[50]; // this sucks
-
-    for(int i = 0; i < tabs.length; i++){
-        tabs[i] = new TabStop(f * (i + 1), TabStop.ALIGN_LEFT, TabStop.LEAD_NONE);
-    }
-    TabSet tabset = new TabSet(tabs);
-
-    StyleContext sc = StyleContext.getDefaultStyleContext();
-    AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY,
-    StyleConstants.TabSet, tabset);
-    pane.setParagraphAttributes(aset, false);
+    
+    //setTabs();
+    
+    
     scrollPane = new JScrollPane (pane);
   }
  
@@ -78,6 +66,25 @@ public class LineasText extends JPanel{
     for (int line = startline, y = 0; line <= endline;line++, y += fontHeight){
 	g.drawString (Integer.toString (line), 0, y);
       }
+  }
+  
+  public void setTabs(){
+      Font font = new Font("Monospaced", Font.PLAIN, 13);
+    Toolkit t = Toolkit.getDefaultToolkit();
+    FontMetrics fm = t.getFontMetrics(font);
+    int cw = fm.stringWidth("    ");
+    float f = (float)cw;
+    TabStop[] tabs = new TabStop[50]; // this sucks
+
+    for(int i = 0; i < tabs.length; i++){
+        tabs[i] = new TabStop(f * (i + 1), TabStop.ALIGN_LEFT, TabStop.LEAD_NONE);
+    }
+    TabSet tabset = new TabSet(tabs);
+
+    StyleContext sc = StyleContext.getDefaultStyleContext();
+    AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY,
+    StyleConstants.TabSet, tabset);
+    pane.setParagraphAttributes(aset, false);
   }
  
 }
