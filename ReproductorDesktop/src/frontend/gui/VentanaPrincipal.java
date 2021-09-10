@@ -154,6 +154,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 tablaErrores.setModel(model);
                 JOptionPane.showMessageDialog(null, "La pista contiene errores");
             }else{
+                JOptionPane.showMessageDialog(null, "No se detectaron errores en la gramatica");
                 iniciarModelo();
                 tablaErrores.setModel(model);
                 compilarAST();

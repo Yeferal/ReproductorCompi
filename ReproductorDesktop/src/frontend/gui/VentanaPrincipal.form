@@ -509,7 +509,7 @@
                               <Color blue="e1" green="8e" red="42" type="rgb"/>
                             </Property>
                             <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
-                              <Color id="Cursor Por defecto"/>
+                              <Color id="Default Cursor"/>
                             </Property>
                           </Properties>
                         </Component>
