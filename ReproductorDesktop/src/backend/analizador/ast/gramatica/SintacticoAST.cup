@@ -4,6 +4,7 @@ import java_cup.runtime.Symbol;
 import java.util.ArrayList;
 import java.util.Stack;
 import backend.analizador.ErrorLSS;
+import backend.analizador.ast.*;
 
 //Codigo para el parser, variables, metodos
 parser code
@@ -61,7 +62,11 @@ parser code
 
 action code
 {:
-    
+    public TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    public ManejadorTablaSimbolos manejadorTablaSimbolos = new ManejadorTablaSimbolos(tablaSimbolos);
+	public ComprobacionTipos comprobacionTipos = new ComprobacionTipos();
+	public ManejadorArreglos manejadorArreglos = new ManejadorArreglos();
+	boolean reportar = true;
 :}
 
 //Declaraciones 
@@ -87,25 +92,26 @@ terminal INDENT, DEDENT;
 
 // declaracion no terminales
 //non terminal String INICIO, blanco, comentarios, codigo, struct_pista, struct_extiende;
-non terminal String INICIO, blanco, codigo, struct_pista, struct_extiende;
-non terminal String extiende_state, struc_code, struct_declaracion_var, keep_state;
-non terminal String valor_declaracion_operacion, valor, struc_asig_var, tipo_dato;
-non terminal String struct_operador_logico, valor_operacion, struct_declaracion_array;
-non terminal String dim_arreglo, valor_arreglo, valores_array;
-non terminal String struct_si, struct_sino, struct_switch;
-non terminal String state_tab, struct_asig_arreglo;
-non terminal String struct_para, struct_mientras;
-non terminal String struct_hacer, struct_funcion, struct_procedimiento, struct_reproducir;
-non terminal String struct_esperar, struct_ordenar, struct_sumarizar, struct_longitud;
-non terminal String struct_mensaje, struct_principal;
-non terminal String strunt_llamada_funcion, struct_llamada_arreglo, parametros, state_params;
-non terminal String para_asig_var, condicion_para, incremento_para, struct_parametros;
-non terminal String notas, tipo_orden, struct_operador_relacional;
-non terminal String tipo_valor_op_logico, mensajes;
-non terminal String st_ind, st_ded, st_final, code_funcion, code_metodo, caso_salir, state_continuar, struct_caso ;
-non terminal params_lleno, param_vacio, valores_array_mas_dim, especiales_q_retornan;
-non terminal state_op_logicos, state_op_racional;
-non terminal struct_declaracion_var_f, struct_declaracion_array_f;
+non terminal Nodo INICIO, blanco, codigo, struct_pista, struct_extiende;
+non terminal Nodo extiende_state, struc_code, struct_declaracion_var;
+non terminal boolean keep_state;
+non terminal Nodo valor_declaracion_operacion, valor, struc_asig_var, tipo_dato;
+non terminal Nodo struct_operador_logico, valor_operacion, struct_declaracion_array;
+non terminal Nodo dim_arreglo, valor_arreglo, valores_array;
+non terminal Nodo struct_si, struct_sino, struct_switch;
+non terminal Nodo state_tab, struct_asig_arreglo;
+non terminal Nodo struct_para, struct_mientras;
+non terminal Nodo struct_hacer, struct_funcion, struct_procedimiento, struct_reproducir;
+non terminal Nodo struct_esperar, struct_ordenar, struct_sumarizar, struct_longitud;
+non terminal Nodo struct_mensaje, struct_principal;
+non terminal Nodo strunt_llamada_funcion, struct_llamada_arreglo, parametros, state_params;
+non terminal Nodo para_asig_var, condicion_para, incremento_para, struct_parametros;
+non terminal Nodo notas, tipo_orden, struct_operador_relacional;
+non terminal Nodo tipo_valor_op_logico, mensajes;
+non terminal Nodo st_ind, st_ded, st_final, code_funcion, code_metodo, caso_salir, state_continuar, struct_caso ;
+non terminal Nodo params_lleno, param_vacio, valores_array_mas_dim, especiales_q_retornan;
+non terminal Nodo state_op_logicos, state_op_racional;
+non terminal Nodo struct_declaracion_var_f, struct_declaracion_array_f;
 /*non terminal ;
 */
 
@@ -141,9 +147,9 @@ blanco ::= 	 INDENT blanco DEDENT blanco
 
 /*------------------------------------------------------------------------------ESTADOS DE INDENT y DEDENT*/
 
-st_ind ::=   INDENT;
+st_ind ::=   INDENT {:manejadorTablaSimbolos.indent();:};
 
-st_ded ::=   DEDENT;
+st_ded ::=   DEDENT {:manejadorTablaSimbolos.dedent();:};
 
 st_final ::= DEDENT
             |;
@@ -182,106 +188,312 @@ struc_code ::=	 struct_declaracion_var struc_code
 /*------------------------------------------------------------------------------ESTRUCTURA DE DECLARACION DE VARIABLES*/
 
 struct_declaracion_var ::=	 
-	 struct_declaracion_var COMA IDENTIFICADOR
-	|struct_declaracion_var COMA IDENTIFICADOR IGUAL struct_operador_logico
-	|keep_state VAR tipo_dato IDENTIFICADOR IGUAL struct_operador_logico
-	|keep_state VAR tipo_dato IDENTIFICADOR;
+	 struct_declaracion_var:ss COMA IDENTIFICADOR:a {:
+			Nodo nodoIz = (Nodo) ss;
+			Simbolo sAux = nodoIz.getSimbolo();
+			Simbolo s = new Simbolo(a,sAux.getTipo(),manejadorTablaSimbolos.ambitoFlag,(boolean)sAux.isIsKeep());
+			Nodo nodo = new NodoDeclaracion(s, 1, manejadorTablaSimbolos.ambitoFlag, nodoIz, null, new Posicion(aright+1, aleft+1));
+			RESULT = Nodo;
+	:}
+	|struct_declaracion_var:r COMA IDENTIFICADOR:a IGUAL struct_operador_logico:vr {:
+			Nodo nodoIz = (Nodo) r;
+			Nodo nodoDr = (Nodo) vr;
+			Simbolo sAux = nodoIz.getSimbolo();
+			Simbolo s = new Simbolo(a,sAux.getTipo(),manejadorTablaSimbolos.ambitoFlag,(boolean)sAux.isIsKeep());
+			Nodo nodo = new NodoDeclaracion(s, 1, manejadorTablaSimbolos.ambitoFlag, nodoIz, nodoDr, new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:}
+	|keep_state:k VAR tipo_dato:t IDENTIFICADOR:a IGUAL struct_operador_logico:vr {:
+			Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,(boolean)k);
+			Nodo nodoDr = (Nodo) vr;
+			Nodo nodo = new NodoDeclaracion(s, 1, manejadorTablaSimbolos.ambitoFlag, null, nodoDr, new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:}
+	|keep_state:k VAR tipo_dato:t IDENTIFICADOR:a {:
+			Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,(boolean)k);
+			Nodo nodo = new NodoDeclaracion(s, 1, manejadorTablaSimbolos.ambitoFlag, null, null, new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:};
 
 struct_declaracion_var_f ::=	 
-	 struct_declaracion_var_f COMA IDENTIFICADOR
-	|struct_declaracion_var_f COMA IDENTIFICADOR IGUAL struct_operador_logico
-	|VAR tipo_dato IDENTIFICADOR IGUAL struct_operador_logico
-	|VAR tipo_dato IDENTIFICADOR;
+	 struct_declaracion_var_f:ss COMA IDENTIFICADOR:a {:
+	 		Nodo nodoIz = (Nodo) ss;
+			Simbolo sAux = nodoIz.getSimbolo();
+			Simbolo s = new Simbolo(a,sAux.getTipo(),manejadorTablaSimbolos.ambitoFlag,(boolean)sAux.isIsKeep());
+			Nodo nodo = new NodoDeclaracion(s, 1, manejadorTablaSimbolos.ambitoFlag, nodoIz, null, new Posicion(aright+1, aleft+1));
+			RESULT = Nodo;
+	:}
+	|struct_declaracion_var_f:r COMA IDENTIFICADOR:a IGUAL struct_operador_logico:vr {:
+			Nodo nodoIz = (Nodo) r;
+			Nodo nodoDr = (Nodo) vr;
+			Simbolo sAux = nodoIz.getSimbolo();
+			Simbolo s = new Simbolo(a,sAux.getTipo(),manejadorTablaSimbolos.ambitoFlag,(boolean)sAux.isIsKeep());
+			Nodo nodo = new NodoDeclaracion(s, 1, manejadorTablaSimbolos.ambitoFlag, nodoIz, nodoDr, new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:}
+	|VAR tipo_dato:t IDENTIFICADOR:a IGUAL struct_operador_logico:vr {:
+			Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,(boolean)false);
+			Nodo nodoDr = (Nodo) vr;
+			Nodo nodo = new NodoDeclaracion(s, 1, manejadorTablaSimbolos.ambitoFlag, null, nodoDr, new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:}
+	|VAR tipo_dato:t IDENTIFICADOR:a {:
+			Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,(boolean)false);
+			Nodo nodo = new NodoDeclaracion(s, 1, manejadorTablaSimbolos.ambitoFlag, null, null, new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:};
 
 /*------------------------------------------------------------------------------ESTADO KEEP*/
 
-keep_state ::=   KEEP 
-                | ;
+keep_state ::=   KEEP {:RESULT = true;:}
+                | {:RESULT = false;:};
 
 /*------------------------------------------------------------------------------VALORES DE DATOS*/
 
 valor ::=	 
-	 IDENTIFICADOR
-	|strunt_llamada_funcion
-	|struct_llamada_arreglo
-	|especiales_q_retornan
-	|NUMERO
-	|DECIMAL
-	|CADENA
-	|CARACTER
-	|TRUE
-	|FALSE;
+	 IDENTIFICADOR:a {:
+	 		Simbolo s = new Simbolo(a,manejadorTablaSimbolos.ambitoFlag);
+			Nodo nodo = new NodoS(s, new Posicion(aright+1, aleft+1), 1, manejadorTablaSimbolos.ambitoFlag);
+			RESULT = nodo;
+
+	:}
+	|strunt_llamada_funcion:r {:RESULT = (Simbolo) r;:}
+	|struct_llamada_arreglo:r {:RESULT = (Simbolo) r;:}
+	|especiales_q_retornan:r {:RESULT = (Simbolo) r;:}
+	|NUMERO:a {:
+			Simbolo s = new Simbolo("ENTERO","ENTERO",manejadorTablaSimbolos.ambitoFlag,(Integer)a);
+			Nodo nodo = new NodoS(s, new Posicion(aright+1, aleft+1), 2, manejadorTablaSimbolos.ambitoFlag);
+			RESULT = nodo;
+	:}
+	|DECIMAL:a {:
+			Simbolo s = new Simbolo("DOBLE","DOBLE",manejadorTablaSimbolos.ambitoFlag,(Double)a);
+			Nodo nodo = new NodoS(s, new Posicion(aright+1, aleft+1), 2, manejadorTablaSimbolos.ambitoFlag);
+			RESULT = nodo;
+	:}
+	|CADENA:a {:
+			Simbolo s = new Simbolo("CADENA","CADENA",manejadorTablaSimbolos.ambitoFlag,(String)a);
+			Nodo nodo = new NodoS(s, new Posicion(aright+1, aleft+1), 2, manejadorTablaSimbolos.ambitoFlag);
+			RESULT = nodo;
+	:}
+	|CARACTER:a {:
+			Simbolo s = new Simbolo("CARACTER","CARACTER",manejadorTablaSimbolos.ambitoFlag,a);
+			Nodo nodo = new NodoS(s, new Posicion(aright+1, aleft+1), 2, manejadorTablaSimbolos.ambitoFlag);
+			RESULT = nodo;
+	:}
+	|TRUE {:
+			Simbolo s = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object)true);
+			Nodo nodo = new NodoS(s, new Posicion(aright+1, aleft+1), 2, manejadorTablaSimbolos.ambitoFlag);
+			RESULT = nodo;
+	:}
+	|FALSE {:
+			Simbolo s = new Simbolo("BOOLEAN","BOOLEAN",manejadorTablaSimbolos.ambitoFlag,(Object)false);
+			Nodo nodo = new NodoS(s, new Posicion(aright+1, aleft+1), 2, manejadorTablaSimbolos.ambitoFlag);
+			RESULT = nodo;
+	:};
 
 strunt_llamada_funcion ::= 
-	 IDENTIFICADOR PA_A state_params PA_C;
+	 IDENTIFICADOR:a PA_A state_params:p PA_C {:
+	 		Simbolo s = new Simbolo(a,manejadorTablaSimbolos.ambitoFlag);
+			Nodo nodo = new NodoS(s, 1, manejadorTablaSimbolos.ambitoFlag, null, nodoDr, new Posicion(aright+1, aleft+1));
+			nodo.setParams(ArrayList()<Nodo>p);
+			RESULT = Nodo;
+	:};
 
 
 parametros ::= 
-	 parametros COMA valor_operacion
-    |valor_operacion;
+	 parametros:ar COMA valor_operacion:r {:
+			ArrayList<Nodo> params = ar;
+			Nodo n = (Nodo)r;
+			params.add(n);
+			RESULT = params;
+	:}
+    |valor_operacion:r {:
+			ArrayList<Nodo> params = new ArrayList<>();
+			Nodo n = (Nodo)r;
+			params.add(n);
+			RESULT = params;
+	:};
 
 state_params ::= 
-	 parametros
-    | ;
+	 parametros:r {:RESULT = r;:}
+    | {:ArrayList<Nodo> params = new ArrayList<>();:};
 
 struct_llamada_arreglo ::= 
-	 IDENTIFICADOR dim_arreglo;
+	 IDENTIFICADOR:a dim_arreglo:d {:
+	 
+	:};
 
 /*------------------------------------------------------------------------------TIPO DE DATOS*/
 
 tipo_dato ::=	 
-	 DOBLE
-	|ENTERO
-	|CARACTER_RSV
-	|CADENA_RSV
-	|BOOLEAN;
+	 DOBLE {:RESULT = "DOBLE";:}
+	|ENTERO {:RESULT = "ENTERO";:}
+	|CARACTER_RSV {:RESULT = "CARACTER";:}
+	|CADENA_RSV {:RESULT = "CADENA";:}
+	|BOOLEAN {:RESULT = "BOOLEAN";:};
 
 
 /*------------------------------------------------------------------------------ESTRUCTURA LOGICA*/
 
 struct_operador_logico ::=	 
-	 struct_operador_logico OR struct_operador_logico
-	|struct_operador_logico NOR struct_operador_logico
-	|struct_operador_logico XOR struct_operador_logico
-	|struct_operador_logico AND struct_operador_logico
-	|struct_operador_logico NAND struct_operador_logico
-	|NOT PA_A struct_operador_logico PA_C
-	|struct_operador_relacional
-	|valor_operacion ;
+	 struct_operador_logico:v1 OR:o struct_operador_logico:v2 {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodoDr = (Nodo)v2;
+			Nodo nodo = new NodoOpLogico(3,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|struct_operador_logico:v1 NOR:o struct_operador_logico:v2 {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodoDr = (Nodo)v2;
+			Nodo nodo = new NodoOpLogico(4,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|struct_operador_logico:v1 XOR:o struct_operador_logico:v2 {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodoDr = (Nodo)v2;
+			Nodo nodo = new NodoOpLogico(5,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|struct_operador_logico:v1 AND:o struct_operador_logico:v2 {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodoDr = (Nodo)v2;
+			Nodo nodo = new NodoOpLogico(1,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|struct_operador_logico:v1 NAND:o struct_operador_logico:v2 {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodoDr = (Nodo)v2;
+			Nodo nodo = new NodoOpLogico(2,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|NOT PA_A struct_operador_logico:v1 PA_C {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodoDr = null;
+			Nodo nodo = new NodoOpLogico(6,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|struct_operador_relacional:r {:RESULT = r;:}
+	|valor_operacion:r {: RESULT = r; :};
 
 state_op_logicos::= OR | NOR | XOR | AND | NAND;
 
 struct_operador_relacional ::=	 
-	 valor_operacion IGUAL_IGUAL valor_operacion
-	|valor_operacion DIFERENTE valor_operacion
-	|valor_operacion MAYOR_Q valor_operacion
-	|valor_operacion MENOR_Q valor_operacion
-	|valor_operacion MAYOR_IGUAL valor_operacion
-	|valor_operacion MENOR_IGUAL valor_operacion
-	|IS_NULL valor_operacion
-    |IS_NULL struct_operador_relacional
-    |PA_A struct_operador_relacional PA_C;
+	 valor_operacion:v1 IGUAL_IGUAL:o valor_operacion:v2 {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodoDr = (Nodo)v2;
+			Nodo nodo = new NodoOpRacional(1,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|valor_operacion:v1 DIFERENTE:o valor_operacion:v2 {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodoDr = (Nodo)v2;
+			Nodo nodo = new NodoOpRacional(2,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|valor_operacion:v1 MAYOR_Q:o valor_operacion:v2 {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodoDr = (Nodo)v2;
+			Nodo nodo = new NodoOpRacional(4,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|valor_operacion:v1 MENOR_Q:o valor_operacion:v2 {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodoDr = (Nodo)v2;
+			Nodo nodo = new NodoOpRacional(3,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|valor_operacion:v1 MAYOR_IGUAL:o valor_operacion:v2 {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodoDr = (Nodo)v2;
+			Nodo nodo = new NodoOpRacional(6,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|valor_operacion:v1 MENOR_IGUAL:o valor_operacion:v2 {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodoDr = (Nodo)v2;
+			Nodo nodo = new NodoOpRacional(5,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|IS_NULL:o valor_operacion:v1  {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodo = new NodoOpRacional(7,manejadorTablaSimbolos.ambitoFlag,nodoIz, null, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+    |IS_NULL:o struct_operador_relacional:v1 {:
+			Nodo nodoIz = (Nodo)v1;
+			Nodo nodo = new NodoOpRacional(7,manejadorTablaSimbolos.ambitoFlag,nodoIz, null, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+    |PA_A struct_operador_relacional:r1 PA_C {: RESULT=r1; :};
 								
 state_op_racional ::==  IGUAL_IGUAL | DIFERENTE | MAYOR_Q | MENOR_Q | MAYOR_IGUAL | MENOR_IGUAL;
 
 /*------------------------------------------------------------------------------VALOR OPERACIONAL*/
 
 valor_operacion ::=	 
-	 valor_operacion MAS valor_operacion
-	|valor_operacion MENOS valor_operacion
-	|valor_operacion POR valor_operacion
-	|valor_operacion DIVISION valor_operacion
-	|valor_operacion MODULO valor_operacion
-	|valor_operacion POTENCIA valor_operacion
-	|PA_A valor_operacion PA_C
-	|valor;
+	 valor_operacion:r1 MAS:o valor_operacion:r2 {:
+			Nodo nodoIz = (Nodo)r1;
+			Nodo nodoDr = (Nodo)r2;
+			Nodo nodo = new NodoOpAritmetico(1,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|valor_operacion:r1 MENOS:o valor_operacion:r2 {:
+			Nodo nodoIz = (Nodo)r1;
+			Nodo nodoDr = (Nodo)r2;
+			Nodo nodo = new NodoOpAritmetico(2,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|valor_operacion:r1 POR:o valor_operacion:r2 {:
+			Nodo nodoIz = (Nodo)r1;
+			Nodo nodoDr = (Nodo)r2;
+			Nodo nodo = new NodoOpAritmetico(3,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|valor_operacion:r1 DIVISION:o valor_operacion:r2 {:
+			Nodo nodoIz = (Nodo)r1;
+			Nodo nodoDr = (Nodo)r2;
+			Nodo nodo = new NodoOpAritmetico(4,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|valor_operacion:r1 MODULO:o valor_operacion:r2 {:
+			Nodo nodoIz = (Nodo)r1;
+			Nodo nodoDr = (Nodo)r2;
+			Nodo nodo = new NodoOpAritmetico(5,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|valor_operacion:r1 POTENCIA:o valor_operacion:r2 {:
+			Nodo nodoIz = (Nodo)r1;
+			Nodo nodoDr = (Nodo)r2;
+			Nodo nodo = new NodoOpAritmetico(6,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|PA_A valor_operacion:r PA_C {: RESULT = r;:}
+	|valor:r  {: RESULT = r;:};
 
 
 struc_asig_var ::= 	 
-	 IDENTIFICADOR IGUAL struct_operador_logico
-	|IDENTIFICADOR MAS_IGUAL struct_operador_logico
-	|IDENTIFICADOR MAS_MAS
-	|IDENTIFICADOR MENOS_MENOS;
+	 IDENTIFICADOR:a IGUAL struct_operador_logico:v1 {:
+			Simbolo s = new Simbolo(a,manejadorTablaSimbolos.ambitoFlag);
+			Nodo nodoDr = (Nodo) v1;
+			Nodo nodo = new NodoDeclaracion(s, 1, manejadorTablaSimbolos.ambitoFlag, null, nodoDr, new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:}
+	|IDENTIFICADOR:a MAS_IGUAL struct_operador_logico:v1 {:
+			Simbolo s = new Simbolo(a,manejadorTablaSimbolos.ambitoFlag);
+			Nodo nodoDr = (Nodo) v1;
+			Nodo nodo = new NodoDeclaracion(s, 11, manejadorTablaSimbolos.ambitoFlag, null, nodoDr, new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:}
+	|IDENTIFICADOR:a MAS_MAS {:
+			Simbolo s = new Simbolo(a,manejadorTablaSimbolos.ambitoFlag);
+			Nodo nodo = new NodoDeclaracion(s, 12, manejadorTablaSimbolos.ambitoFlag, null, null, new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:}
+	|IDENTIFICADOR:a MENOS_MENOS {:
+			Simbolo s = new Simbolo(a,manejadorTablaSimbolos.ambitoFlag);
+			Nodo nodo = new NodoDeclaracion(s, 13, manejadorTablaSimbolos.ambitoFlag, null, null, new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:};
 
 /*------------------------------------------------------------------------------Estructura arreglo*/
 
@@ -291,7 +503,18 @@ struct_declaracion_array ::=
 	|struct_declaracion_array COMA IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
 	|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo IGUAL LLAVE_A valor_arreglo LLAVE_C
 	|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR
-	|keep_state VAR tipo_dato ARREGLO IDENTIFICADOR dim_arreglo;
+	|keep_state:k VAR tipo_dato:t ARREGLO IDENTIFICADOR:a dim_arreglo:d {:
+			if(reportar && d!=null){
+				ArrayList<Integer> dimens = (ArrayList<Integer>) d;
+				Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,new Arreglo(t,dimens),(boolean)k,true);
+				if(manejadorTablaSimbolos.isExistSimbolo(s)){
+					manejadorTablaSimbolos.agregarSimbolo(s);
+				}else{
+					parser.agregarError("Semantico",a,"Error: Ya existe un simbolo con el mismo nombre \""+a+"\" dentro del ambito", aright+1, aleft+1);
+				}
+				RESULT = s;
+			}
+	:};
 
 struct_declaracion_array_f ::= 
 	 struct_declaracion_array_f COMA IDENTIFICADOR dim_arreglo
@@ -333,100 +556,169 @@ struct_asig_arreglo ::=
 /*------------------------------------------------------------------------------STRUCUTRA DE UNA FUNCION*/
 
 struct_funcion ::=	 
-	 tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C st_ind code_funcion st_ded
-	|KEEP tipo_dato IDENTIFICADOR PA_A struct_parametros PA_C st_ind code_funcion st_ded;
+	 tipo_dato:t IDENTIFICADOR:a PA_A struct_parametros:p st_ind code_funcion:c st_ded {:
+			Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,(ArrayList<Simbolo>) p,false,true,false);
+			ArrayList<Nodo> listaAcciones = (ArrayList<Nodo>) c;
+			Nodo nodo = new NodoFuncion(s,2,manejadorTablaSimbolos.ambitoFlag,null,null,p,c,new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:}
+	|KEEP tipo_dato:t IDENTIFICADOR:a PA_A struct_parametros:p st_ind code_funcion:c st_ded {:
+			Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambitoFlag,(ArrayList<Simbolo>) p,true,true,false);
+			ArrayList<Nodo> listaAcciones = (ArrayList<Nodo>) c;
+			Nodo nodo = new NodoFuncion(s,2,manejadorTablaSimbolos.ambitoFlag,null,null,p,c,new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:};
 
 struct_procedimiento ::= 
-	 IDENTIFICADOR PA_A struct_parametros PA_C st_ind code_metodo st_ded
-	|KEEP IDENTIFICADOR PA_A struct_parametros PA_C st_ind code_metodo st_ded;
+	 IDENTIFICADOR:a PA_A struct_parametros:p PA_C st_ind code_metodo:c st_ded {:
+			Simbolo s = new Simbolo(a,"PROCEDIMIETO",manejadorTablaSimbolos.ambitoFlag,(ArrayList<Simbolo>) p,false,false,true);
+			ArrayList<Nodo> listaAcciones = (ArrayList<Nodo>) c;
+			Nodo nodo = new NodoMetodo(s,1,manejadorTablaSimbolos.ambitoFlag,null,null,p,c,new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:}
+	|KEEP IDENTIFICADOR:a PA_A struct_parametros:p PA_C st_ind code_metodo:c st_ded {:
+			Simbolo s = new Simbolo(a,"PROCEDIMIETO",manejadorTablaSimbolos.ambitoFlag,(ArrayList<Simbolo>) p,true,false,true);
+			ArrayList<Nodo> listaAcciones = (ArrayList<Nodo>) c;
+			Nodo nodo = new NodoMetodo(s,1,manejadorTablaSimbolos.ambitoFlag,null,null,p,c,new Posicion(aright+1, aleft+1));
+			RESULT = nodo;
+	:};
 
 
 struct_parametros ::=
-	params_lleno
-	|param_vacio;
+	 params_lleno:r {:RESULT = r;:}
+	|param_vacio:r  {:RESULT = r;:} ;
 
 params_lleno ::= 
-	 struct_parametros COMA tipo_dato IDENTIFICADOR
-	|tipo_dato IDENTIFICADOR;
+	 struct_parametros:r COMA tipo_dato:t IDENTIFICADOR:a {:
+			Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambito+1);
+			ArrayList<Simbolo> lista = (ArrayList<Simbolo>)r;
+			lista.add(s);
+			RESULT = lista;
+	:}
+	|tipo_dato:t IDENTIFICADOR:a {:
+			Simbolo s = new Simbolo(a,t,manejadorTablaSimbolos.ambito+1);
+			ArrayList<Simbolo> lista = new ArrayList<>();
+			lista.add(s);
+			RESULT = lista;
+	:} ;
 
-param_vacio ::= ;
+param_vacio ::= {:ArrayList<Simbolo> lista = new ArrayList<>(); RESULT = lista;:};
 
 code_funcion ::=
-	 struct_declaracion_var_f code_funcion
-	|struc_asig_var code_funcion
-	|struct_declaracion_array_f  code_funcion
-	|struct_asig_arreglo code_funcion
-	|strunt_llamada_funcion code_funcion
-	|struct_si code_funcion
-    |struct_switch code_funcion
-    |struct_para code_funcion
-    |struct_mientras code_funcion
-    |struct_hacer code_funcion
-    |struct_reproducir code_funcion
-    |struct_esperar code_funcion
-    |struct_ordenar code_funcion
-    |struct_sumarizar code_funcion
-    |struct_longitud code_funcion
-	|struct_mensaje code_funcion
-	|RETORNAR struct_operador_logico code_funcion
-	|;
+	 struct_declaracion_var_f:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+	|struc_asig_var:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+	|struct_declaracion_array_f:n  code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+	|struct_asig_arreglo:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+	|strunt_llamada_funcion:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+	|struct_si:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_switch:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_para:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_mientras:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_hacer:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_reproducir:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_esperar:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_ordenar:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_sumarizar:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_longitud:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+	|struct_mensaje:n code_funcion:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+	|RETORNAR struct_operador_logico:n code_funcion:c {::}
+	| {:ArrayList<Nodo> lista = new ArrayList<>(); RESULT = lista;:};
 
 code_metodo ::=
-	 struct_declaracion_var_f code_metodo
-	|struc_asig_var code_metodo
-	|struct_declaracion_array_f  code_metodo
-	|struct_asig_arreglo code_metodo
-	|strunt_llamada_funcion code_metodo
-	|struct_si code_metodo
-    |struct_switch code_metodo
-    |struct_para code_metodo
-    |struct_mientras code_metodo
-    |struct_hacer code_metodo
-    |struct_reproducir code_metodo
-    |struct_esperar code_metodo
-    |struct_ordenar code_metodo
-    |struct_sumarizar code_metodo
-    |struct_longitud code_metodo
-    |struct_mensaje code_metodo
-	|;
+	 struct_declaracion_var_f:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+	|struc_asig_var:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+	|struct_declaracion_array_f:n  code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+	|struct_asig_arreglo:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+	|strunt_llamada_funcion:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+	|struct_si:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_switch:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_para:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_mientras:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_hacer:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_reproducir:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_esperar:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_ordenar:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_sumarizar:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_longitud:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+    |struct_mensaje:n code_metodo:c {:ArrayList<Nodo> lista = (ArrayList<Nodo>) c; lista.add((Nodo)n) RESULT = lista;:}
+	| {:ArrayList<Nodo> lista = new ArrayList<>(); RESULT = lista;:};
 
 
 /*------------------------------------------------------------------------------Funciones reservadas*/
 
 struct_reproducir ::= 
-	 REPRODUCIR PA_A notas COMA valor_operacion COMA valor_operacion COMA valor_operacion PA_C;
+	 REPRODUCIR PA_A notas:p1 COMA valor_operacion:p2 COMA valor_operacion:p3 COMA valor_operacion:p4 PA_C {:
+			Nodo nodo = NodoFEspecial(new Posicion(aright+1, aleft+1), 1,manejadorTablaSimbolos.ambitoFlag,p1,null,p2,p3,p4,null); 
+			RESULT = nodo;
+	:};
 
 struct_esperar ::= 
-	 ESPERAR PA_A valor_operacion COMA valor_operacion PA_C;
+	 ESPERAR PA_A valor_operacion:p2 COMA valor_operacion:p3 PA_C {:
+			Nodo nodo = NodoFEspecial(new Posicion(aright+1, aleft+1), 2,manejadorTablaSimbolos.ambitoFlag,null,null,p2,p3,null,null); 
+			RESULT = nodo;
+	:};
 
 struct_ordenar ::= 
-	 ORDENAR PA_A IDENTIFICADOR COMA tipo_orden PA_C;
+	 ORDENAR PA_A IDENTIFICADOR:p1 COMA tipo_orden:p11 PA_C {:
+			Nodo nodo = NodoFEspecial(new Posicion(aright+1, aleft+1), 3,manejadorTablaSimbolos.ambitoFlag,(String) p1,(String) p11,null,null,null,null); 
+			RESULT = nodo;
+	:};
 
 struct_sumarizar ::= 
-	 SUMARIZAR PA_A IDENTIFICADOR PA_C;
+	 SUMARIZAR PA_A IDENTIFICADOR:p1 PA_C {:
+			Nodo nodo = NodoFEspecial(new Posicion(aright+1, aleft+1), 4,manejadorTablaSimbolos.ambitoFlag,(String) p1,null,null,null,null,null); 
+			RESULT = nodo;
+	:};
 
 struct_longitud ::= 
-	 LONGITUD PA_A valor_operacion PA_C;
+	 LONGITUD PA_A valor_operacion:p2 PA_C {:
+			Nodo nodo = NodoFEspecial(new Posicion(aright+1, aleft+1), 5,manejadorTablaSimbolos.ambitoFlag,null,null,(Nodo)p2,null,null,null); 
+			RESULT = nodo;
+	:};
 
 struct_mensaje ::= 	 
-	 MENSAJE PA_A mensajes PA_C
+	 MENSAJE:a PA_A mensajes:m PA_C {:
+			Nodo nodo = NodoFEspecial(new Posicion(aright+1, aleft+1), 6,manejadorTablaSimbolos.ambitoFlag,null,null,(Nodo)m,null,null,null); 
+			RESULT = nodo;
+	:}
 	|MENSAJE PA_A PA_C;
 
 mensajes ::= 
-	 mensajes MAS struct_operador_logico 
-	|struct_operador_logico;
+	 mensajes:r1 MAS struct_operador_logico:r2 {:
+			Nodo nodoIz = (Nodo)r1;
+			Nodo nodoDr = (Nodo)r2;
+			Nodo nodo = new NodoOpAritmetico(1,manejadorTablaSimbolos.ambitoFlag,nodoIz, nodoDr, new Posicion(oright+1, oleft+1));
+			RESULT = nodo;
+	:}
+	|struct_operador_logico:r1 {: RESULT = r1:};
 
 /*------------------------------------------------------------------------------NOTAS MUSICALES*/
 
-notas ::= 	 DO | RE | MI | FA | SOL | LA | SI 
-			|DO_S | RE_S | FA_S | SOL_S | LA_S;
+notas ::= 	 
+	 DO:a {:String r = (String)a; RESULT = r;:} 
+	| RE:a {:String r = (String)a; RESULT = r;:} 
+	| MI:a {:String r = (String)a; RESULT = r;:} 
+	| FA:a {:String r = (String)a; RESULT = r;:} 
+	| SOL:a {:String r = (String)a; RESULT = r;:} 
+	| LA:a {:String r = (String)a; RESULT = r;:} 
+	| SI:a {:String r = (String)a; RESULT = r;:} 
+	|DO_S:a {:String r = (String)a; RESULT = r;:} 
+	| RE_S:a {:String r = (String)a; RESULT = r;:} 
+	| FA_S:a {:String r = (String)a; RESULT = r;:} 
+	| SOL_S:a {:String r = (String)a; RESULT = r;:} 
+	| LA_S:a {:String r = (String)a; RESULT = r;:} ;
 
 /*------------------------------------------------------------------------------OCTAVAS*/
 
 //octavas ::= 
 /*------------------------------------------------------------------------------TIPO DE ORDEN*/
 
-tipo_orden ::= ASCENDENTE | DESCENDENTE | PARES | IMPARES | PRIMOS ;
+tipo_orden ::= 
+	 ASCENDENTE:a {:String r = (String)a; RESULT = r;:} 
+	|DESCENDENTE:a {:String r = (String)a; RESULT = r;:} 
+	|PARES:a {:String r = (String)a; RESULT = r;:} 
+	|IMPARES:a {:String r = (String)a; RESULT = r;:} 
+	|PRIMOS:a {:String r = (String)a; RESULT = r;:} ;
 
 /*------------------------------------------------------------------------------ORDENACION*/ 
 
@@ -491,9 +783,9 @@ state_continuar ::=  CONTINUAR
 
 
 especiales_q_retornan ::=
-	 struct_reproducir
-    |struct_sumarizar
-    |struct_longitud;
+	 struct_reproducir:r {:RESULT = r;:}
+    |struct_sumarizar:r {:RESULT = r;:}
+    |struct_longitud:r {:RESULT = r;:};
 
 
 

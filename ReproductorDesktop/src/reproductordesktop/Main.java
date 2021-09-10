@@ -5,6 +5,9 @@
  */
 package reproductordesktop;
 
+import backend.analizador.ast.Nodo;
+import backend.analizador.ast.NodoOpAritmetico;
+import backend.analizador.ast.NodoS;
 import backend.analizador.comprobaciones.tablasimbolos.ComprobacionTipos;
 import backend.analizador.objetos.Arreglo;
 import backend.analizador.objetos.ManejadorArreglos;
@@ -15,6 +18,9 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jfugue.pattern.Pattern;
+
+import org.jfugue.player.Player;
 
 /**
  *
@@ -28,6 +34,9 @@ public class Main {
     public static void main(String[] args) {
         
         
+//        Player player = new Player();
+//        Pattern p = new Pattern("C").setTempo(100);
+//        player.play(p,p);
         
         VentanaPrincipal ventanaPrincipal = new VentanaPrincipal();
         ventanaPrincipal.setVisible(true);

@@ -7,6 +7,7 @@ package backend.analizador.ast;
 
 import backend.analizador.objetos.Posicion;
 import backend.analizador.objetos.Simbolo;
+import java.util.ArrayList;
 
 /**
  *
@@ -20,8 +21,8 @@ public abstract class Nodo {
      *  3. Nodo operador Racional (==,!=, <, >, <=, >=, !!)
      *  4. Nodo operador Logico (&&, !&&, ||, !||, &|, !)
      *  5. Nodo declaracion var
-     *  6. Nodo asignacion var
-     *  7. Nodo declaracion var arreglo
+     *  6. Nodo declaracion var arreglo
+     *  7. Nodo asignacion var
      *  8. Nodo asignacion var arreglo
      *  9. Nodo operador incremento/decremento (+=, ++, --)
      * 10. Nodo Si
@@ -77,6 +78,18 @@ public abstract class Nodo {
     public abstract int getAmbito();
     
     public abstract void setAmbito(int ambito);
+    
+    public abstract ArrayList<Integer> getDimens();
+    
+    public abstract void setDimens(ArrayList<Nodo> dimens);
+    
+    public abstract ArrayList<Object> getLista();
+            
+    public abstract void setLista(ArrayList<Object> lista);
+    
+    public abstract ArrayList<Nodo> getParams();
+    
+    public abstract void setParams(ArrayList<Nodo> params);
     
 //    public abstract ();
     

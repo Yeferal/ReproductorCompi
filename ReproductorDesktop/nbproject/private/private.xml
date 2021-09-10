@@ -3,12 +3,20 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/home/yefer/Documentos/Proyecto/Compi/ReproductorCompi/ReproductorDesktop/src/backend/analizador/ast/gramatica/AnalizadorLexicoAST.java</file>
-            <file>file:/home/yefer/Documentos/Proyecto/Compi/ReproductorCompi/ReproductorDesktop/src/reproductordesktop/Main.java</file>
-            <file>file:/home/yefer/Documentos/Proyecto/Compi/ReproductorCompi/ReproductorDesktop/src/backend/analizador/objetos/Simbolo.java</file>
-            <file>file:/home/yefer/Documentos/Proyecto/Compi/ReproductorCompi/ReproductorDesktop/src/backend/analizador/comprobaciones/tablasimbolos/ComprobacionTipos.java</file>
-            <file>file:/home/yefer/Documentos/Proyecto/Compi/ReproductorCompi/ReproductorDesktop/src/backend/analizador/objetos/TablaSimbolos.java</file>
-            <file>file:/home/yefer/Documentos/Proyecto/Compi/ReproductorCompi/ReproductorDesktop/src/frontend/gui/VentanaPrincipal.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/backend/analizador/ast/NodoMetodo.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/backend/analizador/ast/NodoMientrasHacer.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/backend/analizador/objetos/Simbolo.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/backend/analizador/ast/Nodo.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/backend/analizador/ast/NodoFEspecial.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/reproductordesktop/Main.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/backend/analizador/ast/NodoAsignacion.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/backend/analizador/ast/NodoPrincipal.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/backend/analizador/ast/NodoPara.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/backend/analizador/ast/NodoSINO.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/backend/analizador/ast/NodoDeclaracion.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/backend/analizador/ast/NodoFuncion.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/backend/analizador/ast/NodoS.java</file>
+            <file>file:/C:/Users/Usuario/Documents/Nueva%20carpeta/ReproductorCompi/ReproductorDesktop/src/backend/analizador/ast/NodoSwitch.java</file>
         </group>
     </open-files>
 </project-private>

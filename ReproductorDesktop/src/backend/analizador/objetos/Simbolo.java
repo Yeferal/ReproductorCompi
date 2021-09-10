@@ -1,6 +1,7 @@
 
 package backend.analizador.objetos;
 
+import backend.analizador.ast.Nodo;
 import java.util.ArrayList;
 
 public class Simbolo {
@@ -30,6 +31,7 @@ public class Simbolo {
     private int ambito, numParams, tipoReturn;
     private ArrayList<String> tipoParams;
     private ArrayList<Simbolo> simbParams;
+    private ArrayList<Nodo> simbParamsNodo;
     private Object objeto;
     private boolean isKeep, isArreglo = false, isFuncion=false, isMetodo=false;
 //    private Nodo raiz;
