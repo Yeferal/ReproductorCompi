@@ -124,13 +124,13 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         if(evt.getKeyCode()==KeyEvent.VK_ENTER){
             int fila = 0;
             fila = posicionCursor;
-            pintarTexto();
+//            pintarTexto();
             lines.pane.setCaretPosition(fila-1);
         }
         else if(evt.getKeyCode()==KeyEvent.VK_SPACE){
             int fila = 0;
             fila = posicionCursor;
-            pintarTexto();
+//            pintarTexto();
             lines.pane.setCaretPosition(fila-1);
         }
     }

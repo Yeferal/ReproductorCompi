@@ -1,0 +1,2 @@
+backend.analizador.ast.gramatica.AnalizadorSintacticoAST
+backend.analizador.ast.gramatica.CUP$AnalizadorSintacticoAST$actions
